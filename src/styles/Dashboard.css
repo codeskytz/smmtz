@@ -323,6 +323,13 @@
   font-size: 1.1rem;
 }
 
+/* Profile Section */
+.profile-section {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
 /* Profile Dropdown */
 .profile-dropdown {
   position: absolute;

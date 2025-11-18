@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { getDoc, doc } from 'firebase/firestore';
+import { db } from '../config/firebase';
 import '../styles/Auth.css';
 
 function Login() {
   const navigate = useNavigate();
-  const { login, signInWithGoogle, error } = useAuth();
+  const { login, signInWithGoogle } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -17,8 +19,29 @@ function Login() {
     setLoading(true);
 
     try {
-      await login(email, password);
-      navigate('/dashboard');
+      const userCredential = await login(email, password);
+      
+      // Fetch user role from Firestore
+      try {
+        const userDocRef = doc(db, 'users', userCredential.uid);
+        const userDocSnap = await getDoc(userDocRef);
+        
+        if (userDocSnap.exists()) {
+          const role = userDocSnap.data().role || 'user';
+          // Redirect based on role
+          if (role === 'admin') {
+            navigate('/admin-dashboard');
+          } else {
+            navigate('/dashboard');
+          }
+        } else {
+          // Default to user dashboard
+          navigate('/dashboard');
+        }
+      } catch (err) {
+        console.warn('Failed to fetch user role, redirecting to user dashboard:', err);
+        navigate('/dashboard');
+      }
     } catch (err) {
       setLoginError(err.message);
     } finally {
@@ -31,8 +54,27 @@ function Login() {
     setLoading(true);
 
     try {
-      await signInWithGoogle();
-      navigate('/dashboard');
+      const userCredential = await signInWithGoogle();
+      
+      // Fetch user role from Firestore
+      try {
+        const userDocRef = doc(db, 'users', userCredential.uid);
+        const userDocSnap = await getDoc(userDocRef);
+        
+        if (userDocSnap.exists()) {
+          const role = userDocSnap.data().role || 'user';
+          if (role === 'admin') {
+            navigate('/admin-dashboard');
+          } else {
+            navigate('/dashboard');
+          }
+        } else {
+          navigate('/dashboard');
+        }
+      } catch (err) {
+        console.warn('Failed to fetch user role, redirecting to user dashboard:', err);
+        navigate('/dashboard');
+      }
     } catch (err) {
       setLoginError(err.message);
     } finally {

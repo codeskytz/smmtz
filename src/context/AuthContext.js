@@ -12,19 +12,40 @@ import {
   verifyPasswordResetCode,
 } from 'firebase/auth';
 import { auth, db } from '../config/firebase';
-import { setDoc, doc } from 'firebase/firestore';
+import { setDoc, doc, getDoc } from 'firebase/firestore';
 
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
+  const [userRole, setUserRole] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Listen for auth state changes
+  // Listen for auth state changes and fetch user role
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       setUser(currentUser);
+      
+      // Fetch user role from Firestore if user exists
+      if (currentUser) {
+        try {
+          const userDocRef = doc(db, 'users', currentUser.uid);
+          const userDocSnap = await getDoc(userDocRef);
+          
+          if (userDocSnap.exists()) {
+            setUserRole(userDocSnap.data().role || 'user');
+          } else {
+            setUserRole('user'); // Default role
+          }
+        } catch (err) {
+          console.warn('Failed to fetch user role:', err);
+          setUserRole('user'); // Default to user role on error
+        }
+      } else {
+        setUserRole(null);
+      }
+      
       setLoading(false);
     });
 
@@ -32,7 +53,7 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   // Register with email and password
-  const register = async (email, password, displayName) => {
+  const register = async (email, password, displayName, role = 'user') => {
     try {
       setError(null);
       const res = await createUserWithEmailAndPassword(auth, email, password);
@@ -48,6 +69,7 @@ export const AuthProvider = ({ children }) => {
           uid: res.user.uid,
           email: email,
           displayName: displayName,
+          role: role,
           createdAt: new Date(),
           photoURL: res.user.photoURL || null,
         });
@@ -57,6 +79,7 @@ export const AuthProvider = ({ children }) => {
       }
 
       setUser(res.user);
+      setUserRole(role);
       return res.user;
     } catch (err) {
       setError(err.message);
@@ -95,13 +118,17 @@ export const AuthProvider = ({ children }) => {
             uid: res.user.uid,
             email: res.user.email,
             displayName: res.user.displayName,
+            role: 'user',
             createdAt: new Date(),
             photoURL: res.user.photoURL || null,
           });
+          setUserRole('user');
+        } else {
+          setUserRole(userDocSnap.data().role || 'user');
         }
       } catch (firestoreErr) {
         console.warn('Firestore write failed, but user authenticated successfully:', firestoreErr);
-        // Continue anyway - user is authenticated
+        setUserRole('user'); // Default to user role
       }
 
       setUser(res.user);
@@ -118,6 +145,7 @@ export const AuthProvider = ({ children }) => {
       setError(null);
       await signOut(auth);
       setUser(null);
+      setUserRole(null);
     } catch (err) {
       setError(err.message);
       throw err;
@@ -203,6 +231,7 @@ export const AuthProvider = ({ children }) => {
 
   const value = {
     user,
+    userRole,
     loading,
     error,
     register,
