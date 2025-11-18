@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import '../styles/Auth.css';
 
@@ -86,7 +86,9 @@ function Login() {
             disabled={loading}
           />
           <p className="page-link">
-            <span className="page-link-label">Forgot Password?</span>
+            <Link to="/forgot-password" className="page-link-label" style={{ textDecoration: 'none', color: 'var(--accent-primary)' }}>
+              Forgot Password?
+            </Link>
           </p>
           <button type="submit" className="form-btn" disabled={loading}>
             {loading ? 'Logging in...' : 'Log in'}
@@ -113,3 +115,4 @@ function Login() {
 }
 
 export default Login;
+

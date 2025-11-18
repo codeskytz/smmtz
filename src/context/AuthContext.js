@@ -7,6 +7,9 @@ import {
   updateProfile,
   GoogleAuthProvider,
   signInWithPopup,
+  sendPasswordResetEmail,
+  confirmPasswordReset,
+  verifyPasswordResetCode,
 } from 'firebase/auth';
 import { auth, db } from '../config/firebase';
 import { setDoc, doc } from 'firebase/firestore';
@@ -147,6 +150,57 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // Send password reset email with custom redirect URL
+  const forgotPassword = async (email, customRedirectUrl = null) => {
+    try {
+      setError(null);
+      
+      // Build the redirect URL
+      let redirectUrl = customRedirectUrl;
+      if (!redirectUrl) {
+        // Default to the app's reset password page
+        const baseUrl = window.location.origin;
+        redirectUrl = `${baseUrl}/reset-password`;
+      }
+
+      // Firebase sendPasswordResetEmail options
+      const actionCodeSettings = {
+        url: redirectUrl,
+        handleCodeInApp: true,
+      };
+
+      await sendPasswordResetEmail(auth, email, actionCodeSettings);
+      return { success: true, message: 'Password reset email sent. Check your inbox.' };
+    } catch (err) {
+      setError(err.message);
+      throw err;
+    }
+  };
+
+  // Reset password with reset code
+  const resetPassword = async (code, newPassword) => {
+    try {
+      setError(null);
+      await confirmPasswordReset(auth, code, newPassword);
+      return { success: true, message: 'Password reset successfully. You can now login with your new password.' };
+    } catch (err) {
+      setError(err.message);
+      throw err;
+    }
+  };
+
+  // Verify reset code and get email
+  const verifyResetCode = async (code) => {
+    try {
+      setError(null);
+      const email = await verifyPasswordResetCode(auth, code);
+      return email;
+    } catch (err) {
+      setError('Invalid or expired reset link');
+      throw err;
+    }
+  };
+
   const value = {
     user,
     loading,
@@ -156,6 +210,9 @@ export const AuthProvider = ({ children }) => {
     logout,
     signInWithGoogle,
     updateUserProfile,
+    forgotPassword,
+    resetPassword,
+    verifyResetCode,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
