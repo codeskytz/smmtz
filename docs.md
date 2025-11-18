@@ -313,14 +313,3 @@ ZenoPay will POST to your webhook with this payload:
 Verify the request by checking the `x-api-key` header to ensure it comes from ZenoPay.
 
 ---
-
-## 📧 Support
-
-* Email: [support@zenoapi.com](mailto:support@zenoapi.com)
-* Website: [https://zenoapi.com](https://zenoapi.com)
-
----
-
-**ZenoPay – Simplifying Digital Payments in Tanzania 🇹🇿**
-
-```
