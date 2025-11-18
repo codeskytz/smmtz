@@ -1,0 +1,37 @@
+// FIREBASE FIRESTORE SECURITY RULES
+// Copy and paste these rules into your Firebase Console:
+// 1. Go to Firebase Console > Your Project > Firestore Database
+// 2. Click on the "Rules" tab
+// 3. Replace all content with the rules below
+// 4. Click "Publish"
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Allow users to read/write their own user document
+    match /users/{userId} {
+      allow read, write: if request.auth.uid == userId;
+    }
+
+    // Allow authenticated users to create new documents in collections
+    // Add more specific rules below as needed for your collections
+    
+    // Example: Campaigns collection
+    match /campaigns/{document=**} {
+      allow read, write: if request.auth != null;
+    }
+
+    // Example: Analytics collection
+    match /analytics/{document=**} {
+      allow read, write: if request.auth != null;
+    }
+
+    // Default deny all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
+
+// IMPORTANT: These are permissive rules for development.
+// For production, make them more restrictive based on your needs.
