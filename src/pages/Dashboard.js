@@ -5,6 +5,7 @@ import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import Deposit from './Deposit';
 import Transactions from './Transactions';
+import Services from './Services';
 import '../styles/Dashboard.css';
 
 function Dashboard() {
@@ -355,7 +356,8 @@ function Dashboard() {
         <main className="main-content">
           {activeNav === 'deposit' && <Deposit />}
           {activeNav === 'transactions' && <Transactions />}
-          {activeNav !== 'deposit' && activeNav !== 'transactions' && (
+          {activeNav === 'services' && <Services />}
+          {activeNav !== 'deposit' && activeNav !== 'transactions' && activeNav !== 'services' && (
             <div className="content-placeholder">
               <h1>Welcome to SMMTZ Dashboard</h1>
               <p>Select a menu item from the sidebar to get started</p>

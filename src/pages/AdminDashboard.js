@@ -5,6 +5,7 @@ import { signOut } from 'firebase/auth';
 import { auth } from '../config/firebase';
 import UserManagement from './UserManagement';
 import AdminBalance from './AdminBalance';
+import AdminServices from './AdminServices';
 import '../styles/Dashboard.css';
 
 const AdminDashboard = () => {
@@ -278,12 +279,7 @@ const AdminDashboard = () => {
             <p>Orders content coming soon...</p>
           </div>
         )}
-        {activeNav === 'services' && (
-          <div className="content-placeholder">
-            <h2>Services Management</h2>
-            <p>Services content coming soon...</p>
-          </div>
-        )}
+        {activeNav === 'services' && <AdminServices />}
         {activeNav === 'reports' && (
           <div className="content-placeholder">
             <h2>Reports</h2>

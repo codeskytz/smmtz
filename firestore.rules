@@ -47,6 +47,16 @@ service cloud.firestore {
       allow read: if isAdmin();
     }
 
+    // Services collection
+    match /services/{serviceId} {
+      // Allow authenticated users to read enabled services
+      allow read: if request.auth != null && 
+        (resource.data.enabled == true || isAdmin());
+      
+      // Only admins can create, update, or delete services
+      allow create, update, delete: if isAdmin();
+    }
+
     // Default deny all
     match /{document=**} {
       allow read, write: if false;
