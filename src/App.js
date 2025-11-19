@@ -8,6 +8,8 @@ import Dashboard from './pages/Dashboard';
 import AdminDashboard from './pages/AdminDashboard';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
+import Deposit from './pages/Deposit';
+import Transactions from './pages/Transactions';
 
 function App() {
   return (
@@ -20,6 +22,8 @@ function App() {
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/deposit" element={<Deposit />} />
+          <Route path="/transactions" element={<Transactions />} />
           <Route path="/admin-dashboard" element={<AdminDashboard />} />
         </Routes>
       </AuthProvider>

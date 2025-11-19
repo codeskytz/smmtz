@@ -197,119 +197,66 @@ if ($refillIds) {
 }
 ```
 ---
-## ZENOPAY_PAYMENT GATEWAY DOCS 
+## fastlipa GATEWAY DOCS 
+1
+Get Account Info
 
+GET /api/balance
+Retrieve authenticated user's account information including current balance and account details.
+where this can be used in admin panel to see the available revenue generated to his walllet in a payment gateway "
+Code Examples
 
-
-
-
-# ZenoPay Mobile Money Tanzania Integration
-
-This project demonstrates how to integrate with **ZenoPay Mobile Money API** to accept payments in Tanzania.  
-It includes examples of **creating a payment request**, **checking order status**, and **handling webhooks**.
-
----
-
-## 📌 Requirements
-- Node.js 16+
-- npm or yarn
-- [Axios](https://www.npmjs.com/package/axios)
-
-Install dependencies:
-
-```bash
-npm install axios
-````
-
----
-
-## 🚀 Create Payment Request
-
-```javascript
-import axios from 'axios';
-
-const url = 'https://zenoapi.com/api/payments/mobile_money_tanzania';
-
-// Payment request payload
-const data = {
-  order_id: '3rer407fe-3ee8-4525-456f-ccb95de38250', // Unique transaction ID (UUID recommended)
-  buyer_name: 'William',
-  buyer_phone: '0689726060', // Tanzanian number format 07XXXXXXXX
-  buyer_email: 'william@zeno.co.tz',
-  amount: 1000,
-  webhook_url: 'https://example.com/webhook' // Optional, to receive payment status updates
-};
-
-// Send request
-axios.post(url, data, {
+fetch("https://api.fastlipa.com/api/balance", {
   headers: {
-    'Content-Type': 'application/json',
-    'x-api-key': 'YOUR_API_KEY' // Replace with your actual API key
+    "Authorization": "Bearer YOUR_API_TOKEN"
   }
 })
-  .then(response => console.log('Response:', response.data))
-  .catch(error => console.error('Error:', error.response ? error.response.data : error.message));
-```
+.then(res => res.json())
+.then(data => console.log(data));
 
----
 
-## 📡 Check Order Status
+2
+Create Transaction
+this can be used to create transction to a user  and send a push notification to confirm the trancction ,then an application should have a webhook i.e https://mysite.com/payment/:id/status  which will receive the webhook aand update the user transction  for reciving confiration if the succesfull trasction or not   "in webhook retunrd data  there are two state which are COMPLETED and PENDING so when a webhook receive a  COMPLETE ststus that means the transction completed but unless otherrwise the transction failed  if the return state is  PENDING 
 
-You can query the status of a payment using the `order_id`:
+POST /api/create-transaction
+Initiate a new payment transaction to the specified recipient.
 
-```javascript
-const statusUrl = 'https://zenoapi.com/api/payments/order-status';
-const orderId = '3rer407fe-3ee8-4525-456f-ccb95de38250';
+Body Parameters
+Parameter	Type	Required	Description
+number	String	Yes	Recipient's phone number
+amount	Integer	Yes	Amount to transfer (in smallest currency unit)
+name	String	Yes	Recipient's full name
 
-axios.get(`${statusUrl}?order_id=${orderId}`, {
-  headers: { 'x-api-key': 'YOUR_API_KEY' }
+fetch("https://api.fastlipa.com/api/create-transaction", {
+  method: "POST",
+  headers: {
+    "Authorization": "Bearer YOUR_API_TOKEN",
+    "Content-Type": "application/json"
+  },
+  body: JSON.stringify({
+    number: "0695123456",
+    amount: 5000,
+    name: "John Doe"
+  })
 })
-  .then(response => console.log('Order Status:', response.data))
-  .catch(error => console.error('Error:', error.response ? error.response.data : error.message));
-```
+.then(res => res.json())
+.then(data => console.log(data));
 
-Sample response:
+response
 
-```json
 {
-  "reference": "0936183435",
-  "resultcode": "000",
-  "result": "SUCCESS",
-  "message": "Order fetch successful",
-  "data": [
-    {
-      "order_id": "3rer407fe-3ee8-4525-456f-ccb95de38250",
-      "amount": "1000",
-      "payment_status": "COMPLETED",
-      "channel": "MPESA-TZ",
-      "transid": "CEJ3I3SETSN",
-      "reference": "0936183435",
-      "msisdn": "255744963858"
+    "status": "success",
+    "message": "Payment created",
+    "data": {
+        "tranID": "pay_JNkLgHPcMW",
+        "amount": 5000,
+        "number": "255695123456",
+        "network": "AIRTEL",
+        "status": "PENDING",
+        "time": "2025-11-19T00:36:18.000000Z"
     }
-  ]
-}
-```
+}   
+then after a sccesfull pay the webhook returns COMPLETED if not succesfully the retuend webhook is PENDING so an app will listen for  webhook to confrim transaction 
 
----
-
-## 🔔 Webhook Setup
-
-To automatically receive notifications when a payment is **COMPLETED**, include a `webhook_url` in your payment request.
-
-ZenoPay will POST to your webhook with this payload:
-
-```json
-{
-  "order_id": "677e43274d7cb",
-  "payment_status": "COMPLETED",
-  "reference": "1003020496",
-  "metadata": {
-    "product_id": "12345",
-    "custom_notes": "Please gift-wrap this item."
-  }
-}
-```
-
-Verify the request by checking the `x-api-key` header to ensure it comes from ZenoPay.
-
----
+and update user balance 

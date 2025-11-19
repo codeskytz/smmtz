@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../config/firebase';
+import Deposit from './Deposit';
 import '../styles/Dashboard.css';
 
 function Dashboard() {
@@ -335,10 +336,13 @@ function Dashboard() {
 
         {/* Main Content */}
         <main className="main-content">
-          <div className="content-placeholder">
-            <h1>Welcome to SMMTZ Dashboard</h1>
-            <p>Select a menu item from the sidebar to get started</p>
-          </div>
+          {activeNav === 'deposit' && <Deposit />}
+          {activeNav !== 'deposit' && (
+            <div className="content-placeholder">
+              <h1>Welcome to SMMTZ Dashboard</h1>
+              <p>Select a menu item from the sidebar to get started</p>
+            </div>
+          )}
         </main>
       </div>
     </div>

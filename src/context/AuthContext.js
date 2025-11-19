@@ -19,6 +19,7 @@ const AuthContext = createContext();
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [userRole, setUserRole] = useState(null);
+  const [userBalance, setUserBalance] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -308,9 +309,85 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // Get user balance from Firestore
+  const getUserBalance = async (userId = null) => {
+    try {
+      const uid = userId || user?.uid;
+      if (!uid) throw new Error('User not authenticated');
+
+      const userDocRef = doc(db, 'users', uid);
+      const userDocSnap = await getDoc(userDocRef);
+
+      if (userDocSnap.exists()) {
+        const balance = userDocSnap.data().balance || 0;
+        setUserBalance(balance);
+        return balance;
+      }
+      return 0;
+    } catch (err) {
+      console.error('Error getting balance:', err);
+      setError(err.message);
+      throw err;
+    }
+  };
+
+  // Update user balance (called after successful deposit)
+  const updateUserBalance = async (amount, transactionId = null) => {
+    try {
+      setError(null);
+      if (!user) throw new Error('User not authenticated');
+
+      const userRef = doc(db, 'users', user.uid);
+      const userDocSnap = await getDoc(userRef);
+      const currentBalance = userDocSnap.data().balance || 0;
+      const newBalance = currentBalance + amount;
+
+      await updateDoc(userRef, {
+        balance: newBalance,
+        lastDeposit: new Date(),
+        lastTransactionId: transactionId,
+      });
+
+      setUserBalance(newBalance);
+      return newBalance;
+    } catch (err) {
+      setError(err.message);
+      throw err;
+    }
+  };
+
+  // Withdraw from balance (for orders)
+  const withdrawFromBalance = async (amount) => {
+    try {
+      setError(null);
+      if (!user) throw new Error('User not authenticated');
+
+      const userRef = doc(db, 'users', user.uid);
+      const userDocSnap = await getDoc(userRef);
+      const currentBalance = userDocSnap.data().balance || 0;
+
+      if (currentBalance < amount) {
+        throw new Error('Insufficient balance');
+      }
+
+      const newBalance = currentBalance - amount;
+
+      await updateDoc(userRef, {
+        balance: newBalance,
+      });
+
+      setUserBalance(newBalance);
+      return newBalance;
+    } catch (err) {
+      setError(err.message);
+      throw err;
+    }
+  };
+
   const value = {
     user,
     userRole,
+    userBalance,
     loading,
     error,
     register,
@@ -326,6 +403,9 @@ export const AuthProvider = ({ children }) => {
     demoteAdminToUser,
     suspendUser,
     unsuspendUser,
+    getUserBalance,
+    updateUserBalance,
+    withdrawFromBalance,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { signOut } from 'firebase/auth';
 import { auth } from '../config/firebase';
 import UserManagement from './UserManagement';
+import AdminBalance from './AdminBalance';
 import '../styles/Dashboard.css';
 
 const AdminDashboard = () => {
@@ -206,6 +207,17 @@ const AdminDashboard = () => {
             <span>Users</span>
           </button>
           <button 
+            className={`nav-item ${activeNav === 'balance' ? 'active' : ''}`} 
+            onClick={() => handleNavClick('balance')}
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <circle cx="12" cy="12" r="11"></circle>
+              <path d="M12 8v8"></path>
+              <path d="M16 12H8"></path>
+            </svg>
+            <span>Balance</span>
+          </button>
+          <button 
             className={`nav-item ${activeNav === 'orders' ? 'active' : ''}`} 
             onClick={() => handleNavClick('orders')}
           >
@@ -259,6 +271,7 @@ const AdminDashboard = () => {
           </div>
         )}
         {activeNav === 'users' && <UserManagement />}
+        {activeNav === 'balance' && <AdminBalance />}
         {activeNav === 'orders' && (
           <div className="content-placeholder">
             <h2>Orders Management</h2>
