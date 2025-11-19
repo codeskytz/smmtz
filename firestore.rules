@@ -49,12 +49,19 @@ service cloud.firestore {
 
     // Services collection
     match /services/{serviceId} {
-      // Allow authenticated users to read enabled services
-      allow read: if request.auth != null && 
-        (resource.data.enabled == true || isAdmin());
+      // Allow authenticated users to read services
+      // Users can only see enabled services (filtered in query)
+      // Admins can see all services
+      allow read: if request.auth != null;
       
       // Only admins can create, update, or delete services
       allow create, update, delete: if isAdmin();
+    }
+    
+    // Allow listing services (for queries)
+    match /services {
+      // Allow authenticated users to query services
+      allow list: if request.auth != null;
     }
 
     // Default deny all

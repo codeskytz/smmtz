@@ -279,6 +279,13 @@
   color: var(--accent-primary);
 }
 
+.price-amount.price-unavailable {
+  font-size: 1rem;
+  color: var(--text-tertiary);
+  font-weight: 500;
+  font-style: italic;
+}
+
 .price-unit {
   font-size: 0.75rem;
   color: var(--text-tertiary);

@@ -40,19 +40,46 @@ const Services = () => {
       setLoading(true);
       setError('');
 
-      // Only load enabled services
+      // Load enabled services only
       const servicesRef = collection(db, 'services');
-      // Note: Firestore requires an index for multiple orderBy or where + orderBy
-      // For now, we'll filter in memory after fetching
-      const q = query(servicesRef, orderBy('category', 'asc'));
-      const querySnapshot = await getDocs(q);
+      
+      // Try to query with where clause first (more efficient)
+      // If it fails due to missing index, fall back to filtering in memory
+      let querySnapshot;
+      try {
+        const q = query(
+          servicesRef,
+          where('enabled', '==', true),
+          orderBy('category', 'asc')
+        );
+        querySnapshot = await getDocs(q);
+      } catch (indexError) {
+        // If index doesn't exist, fetch all and filter in memory
+        console.warn('Index not found, filtering in memory:', indexError);
+        const q = query(servicesRef, orderBy('category', 'asc'));
+        querySnapshot = await getDocs(q);
+      }
 
-      // Filter enabled services and sort
+      // Map and filter services
       const servicesList = querySnapshot.docs
-        .map(doc => ({
-          id: doc.id,
-          ...doc.data(),
-        }))
+        .map(doc => {
+          const data = doc.data();
+          return {
+            id: doc.id,
+            serviceId: data.serviceId || doc.id,
+            name: data.name || 'Unnamed Service',
+            category: data.category || 'Uncategorized',
+            type: data.type || 'Default',
+            description: data.description || '',
+            priceTZS: data.priceTZS || '',
+            min: data.min || '0',
+            max: data.max || '0',
+            enabled: data.enabled !== undefined ? data.enabled : false,
+            refill: data.refill || false,
+            cancel: data.cancel || false,
+            ...data
+          };
+        })
         .filter(service => service.enabled === true)
         .sort((a, b) => {
           // Sort by category first, then by name
@@ -69,7 +96,14 @@ const Services = () => {
       setCategories(uniqueCategories);
     } catch (err) {
       console.error('Error loading services:', err);
-      setError('Failed to load services');
+      setError('Failed to load services. Please try again later.');
+      
+      // More detailed error for debugging
+      if (err.code === 'permission-denied') {
+        setError('Permission denied. Please make sure you are logged in and have access to services.');
+      } else if (err.code === 'failed-precondition') {
+        setError('Database index required. Please contact support.');
+      }
     } finally {
       setLoading(false);
     }
@@ -204,19 +238,20 @@ const Services = () => {
 
                 <div className="service-card-footer">
                   <div className="service-price">
-                    {service.priceTZS ? (
+                    {service.priceTZS && parseFloat(service.priceTZS) > 0 ? (
                       <>
                         <span className="price-amount">{formatCurrency(service.priceTZS)}</span>
                         <span className="price-unit">per 1000</span>
                       </>
                     ) : (
-                      <span className="price-amount">Price on request</span>
+                      <span className="price-amount price-unavailable">Price not set</span>
                     )}
                   </div>
                   <button
                     className="btn-order"
                     onClick={() => handleOrderService(service)}
-                    disabled={!service.priceTZS}
+                    disabled={!service.priceTZS || parseFloat(service.priceTZS) <= 0}
+                    title={!service.priceTZS || parseFloat(service.priceTZS) <= 0 ? 'Price must be set to order' : 'Order this service'}
                   >
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                       <path d="M12 5v14"></path>
