@@ -246,12 +246,7 @@ const Deposit = () => {
         setCurrentTransactionAmount(smallestUnitAmount);
 
         // Show payment initiated message
-        setSuccess(
-          `Payment initiated successfully! Transaction ID: ${tranID}\n` +
-          'A push notification has been sent to your phone.\n' +
-          'Please complete the payment confirmation on your device.\n' +
-          'We are checking for payment confirmation...'
-        );
+        setSuccess('Payment initiated! Check your phone for confirmation.');
 
         // Start polling
         setPollingTransactionId(tranID);
@@ -282,8 +277,7 @@ const Deposit = () => {
       <div className="deposit-wrapper">
         {/* Header */}
         <div className="deposit-header">
-          <h1>Add Funds to Your Account</h1>
-          <p>Deposit money to start creating orders</p>
+          <h1>Deposit Funds</h1>
         </div>
 
         {/* Balance Card */}
@@ -374,11 +368,7 @@ const Deposit = () => {
                 <line x1="12" y1="16" x2="12" y2="12"></line>
                 <line x1="12" y1="8" x2="12.01" y2="8"></line>
               </svg>
-              <div>
-                <p>Confirm the payment on your phone</p>
-                <p>We're checking for confirmation every 5 seconds</p>
-                <p>If no confirmation within 3 minutes, the transaction will be marked as failed</p>
-              </div>
+              <p>Confirm payment on your phone</p>
             </div>
           </div>
         )}
@@ -394,14 +384,13 @@ const Deposit = () => {
                 <input
                   id="phone"
                   type="tel"
-                  placeholder="0712345678 or 255712345678"
+                  placeholder="0712345678"
                   value={phoneNumber}
                   onChange={handlePhoneChange}
                   disabled={loading}
                   required
                 />
               </div>
-              <small className="input-hint">Enter phone number (10 or 12 digits)</small>
             </div>
 
             {/* Amount Input */}
@@ -419,7 +408,6 @@ const Deposit = () => {
                   required
                 />
               </div>
-              <small className="input-hint">Minimum deposit: 200 TZS</small>
             </div>
 
             {/* Quick Amount Buttons */}
@@ -470,7 +458,6 @@ const Deposit = () => {
                 disabled={loading}
                 required
               />
-              <small className="input-hint">Must match your ID for verification</small>
             </div>
 
             {/* Submit Button */}
@@ -490,23 +477,10 @@ const Deposit = () => {
                     <path d="M12 5v14"></path>
                     <path d="M5 12h14"></path>
                   </svg>
-                  Continue to Payment
+                  Continue
                 </>
               )}
             </button>
-
-            {/* Info Box */}
-            <div className="info-box">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <circle cx="12" cy="12" r="10"></circle>
-                <line x1="12" y1="16" x2="12" y2="12"></line>
-                <line x1="12" y1="8" x2="12.01" y2="8"></line>
-              </svg>
-              <div>
-                <h4>How it works</h4>
-                <p>A push notification will be sent to your phone. Confirm the payment on your device to complete the transaction. Your account balance will be updated immediately after confirmation.</p>
-              </div>
-            </div>
           </form>
         ) : (
           /* Confirmation Screen */
@@ -556,8 +530,7 @@ const Deposit = () => {
             </div>
 
             <div className="confirmation-notice">
-              <p>📱 A push notification will be sent to <strong>{phoneNumber}</strong></p>
-              <p>Confirm the payment on your device to complete the transaction.</p>
+              <p>📱 Confirm payment on your phone when prompted</p>
             </div>
           </div>
         )}
