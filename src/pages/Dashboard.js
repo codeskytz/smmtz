@@ -7,6 +7,7 @@ import Deposit from './Deposit';
 import Transactions from './Transactions';
 import Services from './Services';
 import UserDashboard from './UserDashboard';
+import NewOrder from './NewOrder';
 import '../styles/Dashboard.css';
 
 function Dashboard() {
@@ -369,10 +370,11 @@ function Dashboard() {
         {/* Main Content */}
         <main className="main-content">
           {activeNav === 'dashboard' && <UserDashboard />}
+          {activeNav === 'new-order' && <NewOrder />}
           {activeNav === 'deposit' && <Deposit />}
           {activeNav === 'transactions' && <Transactions />}
           {activeNav === 'services' && <Services />}
-          {activeNav !== 'dashboard' && activeNav !== 'deposit' && activeNav !== 'transactions' && activeNav !== 'services' && (
+          {activeNav !== 'dashboard' && activeNav !== 'new-order' && activeNav !== 'deposit' && activeNav !== 'transactions' && activeNav !== 'services' && (
             <div className="content-placeholder">
               <h1>Welcome to SMMTZ Dashboard</h1>
               <p>Select a menu item from the sidebar to get started</p>

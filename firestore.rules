@@ -47,6 +47,21 @@ service cloud.firestore {
       allow read: if isAdmin();
     }
 
+    // Orders subcollection - users can manage their own orders
+    match /users/{userId}/orders/{orderId} {
+      // Allow users to read their own orders
+      allow read: if request.auth != null && request.auth.uid == userId;
+
+      // Allow users to create their own orders
+      allow create: if request.auth != null && request.auth.uid == userId;
+
+      // Allow users to update their own orders
+      allow update: if request.auth != null && request.auth.uid == userId;
+
+      // Allow admins to read all orders
+      allow read: if isAdmin();
+    }
+
     // Services collection
     match /services/{serviceId} {
       // Allow authenticated users to read services

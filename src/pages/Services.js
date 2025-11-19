@@ -127,7 +127,10 @@ const Services = () => {
 
   const handleOrderService = (service) => {
     // Navigate to order page with service details
-    navigate(`/new-order?serviceId=${service.id}`);
+    const event = new CustomEvent('navigate', { detail: 'new-order' });
+    window.dispatchEvent(event);
+    // Store service ID in sessionStorage for NewOrder component
+    sessionStorage.setItem('selectedServiceId', service.id);
   };
 
   if (loading) {
