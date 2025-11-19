@@ -3,12 +3,12 @@
  */
 
 const FASTLIPA_API_URL = 'https://api.fastlipa.com/api';
-const API_KEY = process.env.REACT_FASTLIPA_API_KEY;
+const API_KEY = process.env.REACT_APP_FASTLIPA_API_KEY;
 
 // Validate API key on service initialization
 if (!API_KEY) {
   console.warn(
-    'FastLipa API Key is missing. Please create a .env file with REACT_FASTLIPA_API_KEY.\n' +
+    'FastLipa API Key is missing. Please create a .env file with REACT_APP_FASTLIPA_API_KEY.\n' +
     'Copy .env.example to .env and add your actual API key.'
   );
 }
@@ -21,7 +21,7 @@ export async function getBalance() {
   try {
     if (!API_KEY) {
       throw new Error(
-        'FastLipa API Key is not configured. Please create a .env file with REACT_FASTLIPA_API_KEY=your_key'
+        'FastLipa API Key is not configured. Please create a .env file with REACT_APP_FASTLIPA_API_KEY=your_key'
       );
     }
 
@@ -56,7 +56,7 @@ export async function createTransaction(phoneNumber, amount, recipientName) {
   try {
     if (!API_KEY) {
       throw new Error(
-        'FastLipa API Key is not configured. Please create a .env file with REACT_FASTLIPA_API_KEY=your_key'
+        'FastLipa API Key is not configured. Please create a .env file with REACT_APP_FASTLIPA_API_KEY=your_key'
       );
     }
 
@@ -108,7 +108,7 @@ export async function getTransactionStatus(tranID) {
   try {
     if (!API_KEY) {
       throw new Error(
-        'FastLipa API Key is not configured. Please create a .env file with REACT_FASTLIPA_API_KEY=your_key'
+        'FastLipa API Key is not configured. Please create a .env file with REACT_APP_FASTLIPA_API_KEY=your_key'
       );
     }
 

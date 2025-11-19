@@ -327,7 +327,7 @@ Response:
 
 ```env
 # .env file
-REACT_FASTLIPA_API_KEY=FastLipa_yIPdGwsqFyINdHiLGRZjVr
+REACT_APP_FASTLIPA_API_KEY=FastLipa_yIPdGwsqFyINdHiLGRZjVr
 ```
 
 ## Security Notes
