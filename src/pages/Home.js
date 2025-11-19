@@ -178,33 +178,101 @@ function Home() {
       )}
 
       <section className="hero">
+        {/* Background Pattern */}
+        <div className="hero-pattern"></div>
+        <div className="hero-grid-pattern"></div>
+        
+        {/* Animated Blobs */}
         <div className="hero-blob-1"></div>
         <div className="hero-blob-2"></div>
         <div className="hero-blob-3"></div>
+        
+        {/* Content Container */}
         <div className="hero-container">
           <div className="hero-content">
-            <h1>Elevate Your Social Media Presence</h1>
-            <p>Professional growth strategies for your brand. Real engagement, authentic growth, and measurable results.</p>
+            <div className="hero-badge">
+              <span className="badge-icon">🚀</span>
+              <span>Professional SMM Services</span>
+            </div>
+            <h1>
+              <span className="gradient-text">Elevate Your</span>
+              <br />
+              Social Media Engagement
+            </h1>
+            <p className="hero-description">
+              Transform your brand with professional boost services by SMMTZ 
+            </p>
             <div className="hero-buttons">
-              <button className="btn primary" onClick={() => navigate('/register')}>Start Growing</button>
-              <button className="btn secondary">Learn More</button>
+              <button className="btn primary" onClick={() => navigate('/register')}>
+                <span>Get Started </span>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M5 12h14M12 5l7 7-7 7"></path>
+                </svg>
+              </button>
+              <button className="btn secondary" onClick={() => document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' })}>
+                <span>Explore Features</span>
+              </button>
+            </div>
+            <div className="hero-stats">
+              <div className="stat-item">
+                <div className="stat-number">10K+</div>
+                <div className="stat-text">Active Users</div>
+              </div>
+              <div className="stat-divider"></div>
+              <div className="stat-item">
+                <div className="stat-number">500K+</div>
+                <div className="stat-text">Orders Completed</div>
+              </div>
+              <div className="stat-divider"></div>
+              <div className="stat-item">
+                <div className="stat-number">99.9%</div>
+                <div className="stat-text">Uptime</div>
+              </div>
             </div>
           </div>
           <div className="hero-illustration">
             <div className="illustration-card">
+              <div className="card-glow"></div>
               <div className="growth-chart">
                 <GrowthIcon />
               </div>
               <div className="stat-box">
-                <div className="stat-label">Growth Rate</div>
+                <div className="stat-label">Average Growth Rate</div>
                 <div className="stat-value">+250%</div>
+                <div className="stat-trend">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
+                    <polyline points="17 6 23 6 23 12"></polyline>
+                  </svg>
+                  <span>Up 15% this month</span>
+                </div>
+              </div>
+            </div>
+            <div className="floating-elements">
+              <div className="float-element float-1">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="8.5" cy="7" r="4"></circle>
+                  <path d="M20 8v6M23 11h-6"></path>
+                </svg>
+              </div>
+              <div className="float-element float-2">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                </svg>
+              </div>
+              <div className="float-element float-3">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                  <circle cx="12" cy="12" r="3"></circle>
+                </svg>
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      <section className="features">
+      <section className="features" id="features">
         <div className="container">
           <div className="section-header">
             <h2>Why Choose SMMTZ?</h2>
