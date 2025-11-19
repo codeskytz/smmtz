@@ -50,6 +50,19 @@ function Dashboard() {
     }
   }, [user, loading, navigate]);
 
+  // Listen for navigation events from UserDashboard
+  useEffect(() => {
+    const handleNavigate = (event) => {
+      if (event.detail) {
+        setActiveNav(event.detail);
+        setSidebarOpen(false);
+      }
+    };
+
+    window.addEventListener('navigate', handleNavigate);
+    return () => window.removeEventListener('navigate', handleNavigate);
+  }, []);
+
   if (loading || suspensionLoading) {
     return (
       <div className="dashboard-container">
@@ -108,19 +121,6 @@ function Dashboard() {
     setActiveNav(navItem);
     setSidebarOpen(false);
   };
-
-  // Listen for navigation events from UserDashboard
-  useEffect(() => {
-    const handleNavigate = (event) => {
-      if (event.detail) {
-        setActiveNav(event.detail);
-        setSidebarOpen(false);
-      }
-    };
-
-    window.addEventListener('navigate', handleNavigate);
-    return () => window.removeEventListener('navigate', handleNavigate);
-  }, []);
 
   const toggleTheme = () => {
     setIsDarkTheme(!isDarkTheme);
