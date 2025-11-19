@@ -5,8 +5,19 @@ import '../App.css';
 
 function Home() {
   const navigate = useNavigate();
-  const { user, logout } = useAuth();
+  const { user, userRole, logout, loading } = useAuth();
   const [isDarkTheme, setIsDarkTheme] = useState(true);
+
+  // Redirect authenticated users to their dashboard
+  useEffect(() => {
+    if (!loading && user) {
+      if (userRole === 'admin') {
+        navigate('/admin-dashboard');
+      } else {
+        navigate('/dashboard');
+      }
+    }
+  }, [user, userRole, loading, navigate]);
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', isDarkTheme ? 'dark' : 'light');

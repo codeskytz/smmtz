@@ -177,8 +177,8 @@ const Deposit = () => {
       return false;
     }
 
-    if (amount < 1) {
-      setError('Minimum deposit amount is 1 TZS');
+    if (amount < 200) {
+      setError('Minimum deposit amount is 200 TZS');
       return false;
     }
 
@@ -373,14 +373,14 @@ const Deposit = () => {
                 <input
                   id="phone"
                   type="tel"
-                  placeholder="0695123456 or 255695123456"
+                  placeholder="0712345678 or 255712345678"
                   value={phoneNumber}
                   onChange={handlePhoneChange}
                   disabled={loading}
                   required
                 />
               </div>
-              <small className="input-hint">Enter phone number (9 or 12 digits)</small>
+              <small className="input-hint">Enter phone number (10 or 12 digits)</small>
             </div>
 
             {/* Amount Input */}
@@ -398,7 +398,7 @@ const Deposit = () => {
                   required
                 />
               </div>
-              <small className="input-hint">Minimum deposit: 1 TZS</small>
+              <small className="input-hint">Minimum deposit: 200 TZS</small>
             </div>
 
             {/* Quick Amount Buttons */}
@@ -507,7 +507,7 @@ const Deposit = () => {
               </div>
               <div className="detail-row">
                 <span className="detail-label">Amount:</span>
-                <span className="detail-value amount">TZS {formatDisplayAmount(amount)}</span>
+                <span className="detail-value amount">TZS {parseFloat(amount).toLocaleString('en-TZ', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
               </div>
               <div className="detail-row">
                 <span className="detail-label">Full Name:</span>

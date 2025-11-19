@@ -167,9 +167,9 @@ export function formatPhoneNumber(number) {
   // Remove any non-digit characters
   const cleaned = number.replace(/\D/g, '');
 
-  // Handle Tanzania numbers (255xxx)
-  if (cleaned.length === 9) {
-    return `255${cleaned}`; // Local format 0xxx -> 255xxx
+  // Handle Tanzania numbers (255xxxxxxxxx)
+  if (cleaned.length === 10 && cleaned.startsWith('0')) {
+    return `255${cleaned.substring(1)}`; // Local format 0xxxxxxxxx -> 255xxxxxxxxx
   } else if (cleaned.length === 12 && cleaned.startsWith('255')) {
     return cleaned;
   }
