@@ -760,6 +760,19 @@
   cursor: not-allowed;
 }
 
+.refresh-btn svg.spinning {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .balance-error {
   background: rgba(239, 68, 68, 0.1);
   border: 1px solid rgba(239, 68, 68, 0.3);
@@ -810,6 +823,16 @@
   gap: 1rem;
   color: white;
   box-shadow: 0 8px 20px rgba(27, 79, 255, 0.2);
+}
+
+.balance-card.smm-balance-card {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  box-shadow: 0 8px 20px rgba(16, 185, 129, 0.2);
+}
+
+.balance-amount.smm-amount {
+  font-size: 1.8rem;
+  font-weight: 700;
 }
 
 .balance-icon {
