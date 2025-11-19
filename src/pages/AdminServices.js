@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { collection, doc, getDocs, setDoc, deleteDoc, updateDoc, query, orderBy } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import SMMService from '../services/SMMService';
+import ProxyTest from '../components/ProxyTest';
 import '../styles/UserManagement.css';
 
 const AdminServices = () => {
@@ -332,6 +333,9 @@ const AdminServices = () => {
 
       {error && <div className="um-alert error">{error}</div>}
       {success && <div className="um-alert success">{success}</div>}
+
+      {/* Proxy Connection Test */}
+      {!process.env.REACT_APP_PROXY_URL && <ProxyTest />}
 
       {/* Proxy Info Box */}
       {!process.env.REACT_APP_PROXY_URL && (

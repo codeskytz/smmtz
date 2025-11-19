@@ -9,6 +9,14 @@
 const PROXY_URL = process.env.REACT_APP_PROXY_URL || 'http://localhost:3001';
 const USE_PROXY = process.env.REACT_APP_USE_PROXY !== 'false'; // Default to true
 
+// Debug logging
+if (process.env.NODE_ENV === 'development') {
+  console.log('🔧 SMM Service Configuration:');
+  console.log('  PROXY_URL:', PROXY_URL);
+  console.log('  USE_PROXY:', USE_PROXY);
+  console.log('  REACT_APP_PROXY_URL:', process.env.REACT_APP_PROXY_URL);
+}
+
 // Direct API (for reference, but won't work due to CORS)
 const SMM_API_URL = 'https://smmguo.com/api/v2';
 const API_KEY = process.env.REACT_APP_SMM_API_KEY;
@@ -19,8 +27,16 @@ const API_KEY = process.env.REACT_APP_SMM_API_KEY;
 async function makeRequest(params) {
   try {
     if (USE_PROXY) {
+      const proxyEndpoint = `${PROXY_URL}/api/smm`;
+      
+      // Debug logging
+      if (process.env.NODE_ENV === 'development') {
+        console.log('📡 Making request to proxy:', proxyEndpoint);
+        console.log('📦 Request params:', params);
+      }
+      
       // Use proxy server
-      const response = await fetch(`${PROXY_URL}/api/smm`, {
+      const response = await fetch(proxyEndpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -32,8 +48,21 @@ async function makeRequest(params) {
       });
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
-        throw new Error(errorData.error || `Proxy request failed: ${response.statusText}`);
+        const errorText = await response.text();
+        let errorData;
+        try {
+          errorData = JSON.parse(errorText);
+        } catch {
+          errorData = { error: errorText || 'Unknown error' };
+        }
+        
+        console.error('❌ Proxy error response:', {
+          status: response.status,
+          statusText: response.statusText,
+          error: errorData
+        });
+        
+        throw new Error(errorData.error || `Proxy request failed: ${response.status} ${response.statusText}`);
       }
 
       const data = await response.json();
@@ -77,15 +106,30 @@ async function makeRequest(params) {
       return data;
     }
   } catch (error) {
-    console.error('SMM API Error:', error);
+    console.error('❌ SMM API Error:', error);
+    console.error('Error details:', {
+      name: error.name,
+      message: error.message,
+      stack: error.stack
+    });
     
     // Provide helpful error messages
-    if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+    if (error.message.includes('Failed to fetch') || 
+        error.message.includes('NetworkError') || 
+        error.message.includes('Network request failed') ||
+        error.name === 'TypeError') {
       if (USE_PROXY) {
-        throw new Error(
-          `Cannot connect to proxy server at ${PROXY_URL}. ` +
-          'Please ensure the proxy server is running and REACT_APP_PROXY_URL is set correctly.'
-        );
+        const detailedError = 
+          `Cannot connect to proxy server at ${PROXY_URL}\n\n` +
+          `Troubleshooting steps:\n` +
+          `1. Verify REACT_APP_PROXY_URL is set in your .env file\n` +
+          `2. Check if the proxy server is running: ${PROXY_URL}/health\n` +
+          `3. Verify CORS is configured on the proxy server\n` +
+          `4. Check browser console for detailed error messages\n` +
+          `5. Make sure you rebuilt the app after changing .env (npm run build)\n\n` +
+          `Current PROXY_URL: ${PROXY_URL}`;
+        
+        throw new Error(detailedError);
       } else {
         throw new Error(
           'CORS Error: Cannot connect to SMM API from browser. ' +

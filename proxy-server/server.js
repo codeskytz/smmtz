@@ -12,10 +12,40 @@ const PORT = process.env.PORT || 3001;
 const SMM_API_URL = 'https://smmguo.com/api/v2';
 
 // Middleware
+const allowedOrigins = process.env.FRONTEND_URL 
+  ? process.env.FRONTEND_URL.split(',').map(url => url.trim())
+  : ['*'];
+
 app.use(cors({
-  origin: process.env.FRONTEND_URL || '*', // Allow your frontend domain
-  credentials: true
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    // If FRONTEND_URL is '*', allow all origins
+    if (allowedOrigins.includes('*')) {
+      return callback(null, true);
+    }
+    
+    // Check if origin is in allowed list
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      console.warn(`⚠️  CORS blocked request from: ${origin}`);
+      console.log(`Allowed origins: ${allowedOrigins.join(', ')}`);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
+
+// Request logging middleware
+app.use((req, res, next) => {
+  console.log(`${new Date().toISOString()} - ${req.method} ${req.path} - Origin: ${req.headers.origin || 'none'}`);
+  next();
+});
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -85,5 +115,7 @@ app.listen(PORT, () => {
   console.log(`🚀 SMM Proxy Server running on port ${PORT}`);
   console.log(`📡 Proxying requests to: ${SMM_API_URL}`);
   console.log(`🔑 API Key configured: ${process.env.SMM_API_KEY ? 'Yes' : 'No'}`);
+  console.log(`🌐 Allowed origins: ${process.env.FRONTEND_URL || '* (all)'}`);
+  console.log(`\n✅ Server ready! Test health: http://localhost:${PORT}/health`);
 });
 
