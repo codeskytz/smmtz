@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, collection, query, getDocs, orderBy } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import Deposit from './Deposit';
 import Transactions from './Transactions';
 import Services from './Services';
+import UserDashboard from './UserDashboard';
 import '../styles/Dashboard.css';
 
 function Dashboard() {
@@ -107,6 +108,19 @@ function Dashboard() {
     setActiveNav(navItem);
     setSidebarOpen(false);
   };
+
+  // Listen for navigation events from UserDashboard
+  useEffect(() => {
+    const handleNavigate = (event) => {
+      if (event.detail) {
+        setActiveNav(event.detail);
+        setSidebarOpen(false);
+      }
+    };
+
+    window.addEventListener('navigate', handleNavigate);
+    return () => window.removeEventListener('navigate', handleNavigate);
+  }, []);
 
   const toggleTheme = () => {
     setIsDarkTheme(!isDarkTheme);
@@ -354,10 +368,11 @@ function Dashboard() {
 
         {/* Main Content */}
         <main className="main-content">
+          {activeNav === 'dashboard' && <UserDashboard />}
           {activeNav === 'deposit' && <Deposit />}
           {activeNav === 'transactions' && <Transactions />}
           {activeNav === 'services' && <Services />}
-          {activeNav !== 'deposit' && activeNav !== 'transactions' && activeNav !== 'services' && (
+          {activeNav !== 'dashboard' && activeNav !== 'deposit' && activeNav !== 'transactions' && activeNav !== 'services' && (
             <div className="content-placeholder">
               <h1>Welcome to SMMTZ Dashboard</h1>
               <p>Select a menu item from the sidebar to get started</p>
