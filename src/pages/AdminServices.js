@@ -6,6 +6,85 @@ import SMMService from '../services/SMMService';
 import ProxyTest from '../components/ProxyTest';
 import '../styles/UserManagement.css';
 
+// Quick Price Edit Component
+const QuickPriceEdit = ({ service, currentPrice, onSave }) => {
+  const [isEditing, setIsEditing] = useState(false);
+  const [priceValue, setPriceValue] = useState(currentPrice || '');
+
+  useEffect(() => {
+    setPriceValue(currentPrice || '');
+  }, [currentPrice]);
+
+  const handleSave = () => {
+    if (priceValue && parseFloat(priceValue) > 0 && priceValue !== currentPrice) {
+      onSave(service, priceValue);
+    }
+    setIsEditing(false);
+  };
+
+  const handleCancel = () => {
+    setPriceValue(currentPrice || '');
+    setIsEditing(false);
+  };
+
+  if (isEditing) {
+    return (
+      <div className="quick-edit-price">
+        <input
+          type="number"
+          value={priceValue}
+          onChange={(e) => setPriceValue(e.target.value)}
+          placeholder="Enter price"
+          min="0"
+          step="0.01"
+          autoFocus
+          className="quick-edit-input"
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') handleSave();
+            if (e.key === 'Escape') handleCancel();
+          }}
+        />
+        <button className="quick-edit-save" onClick={handleSave} title="Save">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
+        </button>
+        <button className="quick-edit-cancel" onClick={handleCancel} title="Cancel">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div 
+      className={`detail-value ${currentPrice ? 'has-price' : 'no-price'} quick-editable`}
+      onClick={() => setIsEditing(true)}
+      title="Click to edit price"
+    >
+      {currentPrice ? (
+        <>
+          <strong>{parseFloat(currentPrice).toLocaleString('en-TZ')} TZS</strong>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ marginLeft: '4px', opacity: 0.6 }}>
+            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+          </svg>
+        </>
+      ) : (
+        <>
+          <span>Not set</span>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ marginLeft: '4px', opacity: 0.6 }}>
+            <path d="M12 5v14M5 12h14"></path>
+          </svg>
+        </>
+      )}
+    </div>
+  );
+};
+
 const AdminServices = () => {
   const { userRole } = useAuth();
   const [services, setServices] = useState([]);
@@ -281,9 +360,30 @@ const AdminServices = () => {
         enabled: !service.enabled,
         updatedAt: new Date(),
       });
+      setSuccess(`Service ${!service.enabled ? 'enabled' : 'disabled'} successfully!`);
       await loadServices();
+      setTimeout(() => setSuccess(''), 3000);
     } catch (err) {
       setError('Failed to update service: ' + err.message);
+    }
+  };
+
+  const handleQuickPriceEdit = async (service, newPrice) => {
+    if (!newPrice || parseFloat(newPrice) <= 0) {
+      setError('Price must be greater than 0');
+      return;
+    }
+
+    try {
+      await updateDoc(doc(db, 'services', service.id), {
+        priceTZS: parseFloat(newPrice),
+        updatedAt: new Date(),
+      });
+      setSuccess('Price updated successfully!');
+      await loadServices();
+      setTimeout(() => setSuccess(''), 3000);
+    } catch (err) {
+      setError('Failed to update price: ' + err.message);
     }
   };
 
@@ -411,7 +511,8 @@ const AdminServices = () => {
         </div>
       </div>
 
-      <div className="users-table-container">
+      {/* Desktop Table View */}
+      <div className="services-table-container desktop-only">
         <table className="users-table">
           <thead>
             <tr>
@@ -445,13 +546,11 @@ const AdminServices = () => {
                   </td>
                   <td>{service.category}</td>
                   <td>
-                    {service.priceTZS ? (
-                      <strong style={{ color: 'var(--accent-primary)' }}>
-                        {parseFloat(service.priceTZS).toLocaleString('en-TZ')} TZS
-                      </strong>
-                    ) : (
-                      <span style={{ color: 'var(--text-tertiary)' }}>Not set</span>
-                    )}
+                    <QuickPriceEdit 
+                      service={service} 
+                      currentPrice={service.priceTZS}
+                      onSave={handleQuickPriceEdit}
+                    />
                   </td>
                   <td>{service.min || '0'} / {service.max || '∞'}</td>
                   <td>
@@ -494,6 +593,88 @@ const AdminServices = () => {
             )}
           </tbody>
         </table>
+      </div>
+
+      {/* Mobile Card View */}
+      <div className="services-cards-container mobile-only">
+        {filteredServices.length === 0 ? (
+          <div className="empty-state-card">
+            <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="8" x2="12" y2="12"></line>
+              <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+            <h3>No services found</h3>
+            <p>Try adjusting your search or filters</p>
+          </div>
+        ) : (
+          <div className="services-cards-grid">
+            {filteredServices.map(service => (
+              <div key={service.id} className="service-admin-card">
+                <div className="service-admin-card-header">
+                  <div className="service-admin-title">
+                    <h3>{service.name}</h3>
+                    <span className="service-admin-id">ID: {service.serviceId || service.id}</span>
+                  </div>
+                  <button
+                    className={`status-toggle-btn ${service.enabled ? 'enabled' : 'disabled'}`}
+                    onClick={() => handleToggleEnabled(service)}
+                    title={service.enabled ? 'Disable' : 'Enable'}
+                  >
+                    <span className="status-dot"></span>
+                    {service.enabled ? 'Enabled' : 'Disabled'}
+                  </button>
+                </div>
+
+                {service.description && (
+                  <p className="service-admin-description">{service.description}</p>
+                )}
+
+                <div className="service-admin-details">
+                  <div className="admin-detail-row">
+                    <span className="detail-label">Category:</span>
+                    <span className="detail-value">{service.category}</span>
+                  </div>
+                  <div className="admin-detail-row">
+                    <span className="detail-label">Price:</span>
+                    <QuickPriceEdit 
+                      service={service} 
+                      currentPrice={service.priceTZS}
+                      onSave={handleQuickPriceEdit}
+                    />
+                  </div>
+                  <div className="admin-detail-row">
+                    <span className="detail-label">Quantity:</span>
+                    <span className="detail-value">{service.min || '0'} - {service.max || '∞'}</span>
+                  </div>
+                </div>
+
+                <div className="service-admin-actions">
+                  <button
+                    className="admin-action-btn edit-btn"
+                    onClick={() => handleEdit(service)}
+                  >
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                    </svg>
+                    Edit
+                  </button>
+                  <button
+                    className="admin-action-btn delete-btn"
+                    onClick={() => handleDelete(service.id)}
+                  >
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <polyline points="3 6 5 6 21 6"></polyline>
+                      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                    </svg>
+                    Delete
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Add/Edit Modal */}
