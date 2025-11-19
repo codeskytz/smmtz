@@ -79,6 +79,75 @@
   letter-spacing: 0.5px;
 }
 
+/* SMM Balance Card */
+.smm-balance-card {
+  position: relative;
+}
+
+.stat-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.balance-refresh-btn {
+  background: transparent;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  padding: 0.25rem 0.5rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  color: var(--text-secondary);
+}
+
+.balance-refresh-btn:hover:not(:disabled) {
+  background: var(--bg-secondary);
+  border-color: var(--accent-primary);
+  color: var(--accent-primary);
+  transform: rotate(180deg);
+}
+
+.balance-refresh-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.balance-refresh-btn svg.spinning {
+  animation: spin 1s linear infinite;
+}
+
+.stat-value.balance-amount {
+  color: var(--accent-primary);
+  font-size: 1.75rem;
+  display: flex;
+  align-items: baseline;
+  gap: 0.25rem;
+}
+
+.balance-currency {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+  margin-left: 0.25rem;
+}
+
+.stat-value.loading {
+  color: var(--text-tertiary);
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.stat-value.error {
+  color: #ef4444;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: help;
+}
+
 /* Alerts */
 .um-alert {
   padding: 1rem;
@@ -885,6 +954,19 @@
 
   .stat-label {
     font-size: 0.7rem;
+  }
+
+  .stat-header-row {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .balance-refresh-btn {
+    padding: 0.3rem 0.6rem;
+  }
+
+  .stat-value.balance-amount {
+    font-size: 1.5rem;
   }
 
   /* Mobile Controls */

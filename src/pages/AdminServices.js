@@ -98,6 +98,9 @@ const AdminServices = () => {
   const [editingService, setEditingService] = useState(null);
   const [showAddModal, setShowAddModal] = useState(false);
   const [categories, setCategories] = useState([]);
+  const [smmBalance, setSmmBalance] = useState(null);
+  const [balanceLoading, setBalanceLoading] = useState(false);
+  const [balanceError, setBalanceError] = useState('');
 
   // Form state for editing/adding
   const [formData, setFormData] = useState({
@@ -115,7 +118,23 @@ const AdminServices = () => {
     if (userRole !== 'admin') return;
     loadServices();
     loadApiServices();
+    loadSmmBalance();
   }, [userRole]);
+
+  const loadSmmBalance = async () => {
+    try {
+      setBalanceLoading(true);
+      setBalanceError('');
+      const balanceData = await SMMService.getBalance();
+      setSmmBalance(balanceData);
+    } catch (err) {
+      console.error('Error loading SMM balance:', err);
+      setBalanceError(err.message || 'Failed to load balance');
+      setSmmBalance(null);
+    } finally {
+      setBalanceLoading(false);
+    }
+  };
 
   const loadServices = async () => {
     try {
@@ -132,10 +151,17 @@ const AdminServices = () => {
           ...doc.data(),
         }))
         .sort((a, b) => {
-          // Sort by category first, then by name
+          // Sort by enabled status first (enabled services first)
+          const aEnabled = a.enabled === true ? 1 : 0;
+          const bEnabled = b.enabled === true ? 1 : 0;
+          if (aEnabled !== bEnabled) {
+            return bEnabled - aEnabled; // Enabled (1) comes before disabled (0)
+          }
+          // Then sort by category
           if (a.category !== b.category) {
             return (a.category || '').localeCompare(b.category || '');
           }
+          // Finally sort by name
           return (a.name || '').localeCompare(b.name || '');
         });
       
@@ -150,10 +176,25 @@ const AdminServices = () => {
       try {
         const servicesRef = collection(db, 'services');
         const querySnapshot = await getDocs(servicesRef);
-        const servicesList = querySnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
+        const servicesList = querySnapshot.docs
+          .map(doc => ({
+            id: doc.id,
+            ...doc.data(),
+          }))
+          .sort((a, b) => {
+            // Sort by enabled status first (enabled services first)
+            const aEnabled = a.enabled === true ? 1 : 0;
+            const bEnabled = b.enabled === true ? 1 : 0;
+            if (aEnabled !== bEnabled) {
+              return bEnabled - aEnabled; // Enabled (1) comes before disabled (0)
+            }
+            // Then sort by category
+            if (a.category !== b.category) {
+              return (a.category || '').localeCompare(b.category || '');
+            }
+            // Finally sort by name
+            return (a.name || '').localeCompare(b.name || '');
+          });
         setServices(servicesList);
         const uniqueCategories = [...new Set(servicesList.map(s => s.category))];
         setCategories(uniqueCategories);
@@ -424,9 +465,47 @@ const AdminServices = () => {
             <div className="stat-value">{services.filter(s => s.enabled).length}</div>
             <div className="stat-label">Enabled</div>
           </div>
-          <div className="stat-card">
-            <div className="stat-value">{services.filter(s => !s.enabled).length}</div>
-            <div className="stat-label">Disabled</div>
+          <div className="stat-card smm-balance-card">
+            <div className="stat-header-row">
+              <div className="stat-label">SMM Panel Balance</div>
+              <button 
+                className="balance-refresh-btn"
+                onClick={loadSmmBalance}
+                disabled={balanceLoading}
+                title="Refresh balance"
+              >
+                <svg 
+                  width="16" 
+                  height="16" 
+                  viewBox="0 0 24 24" 
+                  fill="none" 
+                  stroke="currentColor" 
+                  strokeWidth="2"
+                  className={balanceLoading ? 'spinning' : ''}
+                >
+                  <polyline points="23 4 23 10 17 10"></polyline>
+                  <polyline points="1 20 1 14 7 14"></polyline>
+                  <path d="M3.51 9a9 9 0 0 1 14.85-3.36M20.49 15a9 9 0 0 1-14.85 3.36"></path>
+                </svg>
+              </button>
+            </div>
+            {balanceLoading ? (
+              <div className="stat-value loading">Loading...</div>
+            ) : balanceError ? (
+              <div className="stat-value error" title={balanceError}>
+                Error
+              </div>
+            ) : smmBalance ? (
+              <div className="stat-value balance-amount">
+                {parseFloat(smmBalance.balance || 0).toLocaleString('en-US', {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2
+                })}
+                <span className="balance-currency"> {smmBalance.currency || 'USD'}</span>
+              </div>
+            ) : (
+              <div className="stat-value">--</div>
+            )}
           </div>
         </div>
       </div>
