@@ -100,16 +100,8 @@ const AdminServices = () => {
       setError('');
       setSuccess('');
       
-      // Check if API key is configured
-      if (!process.env.REACT_APP_SMM_API_KEY) {
-        setError(
-          'SMM API Key is not configured. Please add REACT_APP_SMM_API_KEY to your .env file. ' +
-          'Alternatively, you can manually add services using the "Add New Service" button.'
-        );
-        setSyncing(false);
-        return;
-      }
-      
+      // Note: API key is now handled by the proxy server
+      // No need to check for it in the React app
       const apiServicesList = await SMMService.getServices();
       
       if (!Array.isArray(apiServicesList) || apiServicesList.length === 0) {
@@ -175,11 +167,18 @@ const AdminServices = () => {
       let errorMessage = err.message || 'Failed to sync services';
       
       // Provide more helpful error messages
-      if (errorMessage.includes('CORS') || errorMessage.includes('Failed to fetch')) {
-        errorMessage = 
-          'CORS Error: The SMM API cannot be accessed directly from the browser. ' +
-          'You need to set up a backend proxy or use the "Add New Service" button to manually add services. ' +
-          'See the documentation for setting up a backend proxy.';
+      if (errorMessage.includes('CORS') || errorMessage.includes('Failed to fetch') || errorMessage.includes('Cannot connect to proxy')) {
+        if (errorMessage.includes('proxy')) {
+          errorMessage = 
+            'Proxy Server Error: Cannot connect to the proxy server. ' +
+            'Please ensure your proxy server is running and REACT_APP_PROXY_URL is set correctly in your .env file. ' +
+            'See PROXY_SETUP.md for setup instructions.';
+        } else {
+          errorMessage = 
+            'CORS Error: The SMM API cannot be accessed directly from the browser. ' +
+            'You need to set up a backend proxy server. ' +
+            'See PROXY_SETUP.md for detailed setup instructions, or use the "Add New Service" button to manually add services.';
+        }
       }
       
       setError(errorMessage);
@@ -334,8 +333,8 @@ const AdminServices = () => {
       {error && <div className="um-alert error">{error}</div>}
       {success && <div className="um-alert success">{success}</div>}
 
-      {/* CORS Info Box */}
-      {!process.env.REACT_APP_SMM_API_KEY && (
+      {/* Proxy Info Box */}
+      {!process.env.REACT_APP_PROXY_URL && (
         <div className="um-alert info" style={{ 
           background: 'var(--bg-secondary)', 
           border: '1px solid var(--accent-primary)',
@@ -344,9 +343,11 @@ const AdminServices = () => {
           borderRadius: '10px',
           marginBottom: '1rem'
         }}>
-          <strong>⚠️ API Key Not Configured:</strong> Add <code>REACT_APP_SMM_API_KEY</code> to your <code>.env</code> file to enable API syncing.
+          <strong>⚠️ Proxy Server Not Configured:</strong> Add <code>REACT_APP_PROXY_URL</code> to your <code>.env</code> file to enable API syncing.
           <br />
-          <strong>Note:</strong> Due to CORS restrictions, you may need a backend proxy. Use "Add New Service" to manually add services.
+          <strong>Note:</strong> Due to CORS restrictions, you need a backend proxy server. See <code>PROXY_SETUP.md</code> for setup instructions.
+          <br />
+          Alternatively, use "Add New Service" to manually add services.
         </div>
       )}
 

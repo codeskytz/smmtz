@@ -1,69 +1,97 @@
 /**
  * SMM Service - Handles all SMM API calls
+ * Uses a proxy server to avoid CORS issues
  */
 
+// Proxy server URL - Set this to your deployed proxy server URL
+// For local development: http://localhost:3001
+// For production: https://your-proxy-server.com
+const PROXY_URL = process.env.REACT_APP_PROXY_URL || 'http://localhost:3001';
+const USE_PROXY = process.env.REACT_APP_USE_PROXY !== 'false'; // Default to true
+
+// Direct API (for reference, but won't work due to CORS)
 const SMM_API_URL = 'https://smmguo.com/api/v2';
 const API_KEY = process.env.REACT_APP_SMM_API_KEY;
 
-// Validate API key on service initialization
-if (!API_KEY) {
-  console.warn(
-    'SMM API Key is missing. Please create a .env file with REACT_APP_SMM_API_KEY.\n' +
-    'Copy .env.example to .env and add your actual API key.'
-  );
-}
-
 /**
- * Helper function to make API requests
+ * Helper function to make API requests through proxy
  */
 async function makeRequest(params) {
   try {
-    if (!API_KEY) {
-      throw new Error(
-        'SMM API Key is not configured. Please create a .env file with REACT_APP_SMM_API_KEY=your_key'
-      );
-    }
+    if (USE_PROXY) {
+      // Use proxy server
+      const response = await fetch(`${PROXY_URL}/api/smm`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          ...params,
+          // API key is handled by the proxy server from environment variables
+        }),
+      });
 
-    // Convert params to URL-encoded form data
-    const formData = new URLSearchParams();
-    formData.append('key', API_KEY);
-    Object.keys(params).forEach(key => {
-      if (params[key] !== undefined && params[key] !== null) {
-        formData.append(key, params[key]);
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        throw new Error(errorData.error || `Proxy request failed: ${response.statusText}`);
       }
-    });
 
-    const response = await fetch(SMM_API_URL, {
-      method: 'POST',
-      mode: 'cors', // Explicitly set CORS mode
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: formData.toString(),
-    });
+      const data = await response.json();
+      
+      // Check if the response contains an error from SMM API
+      if (data.error) {
+        throw new Error(data.error);
+      }
+      
+      return data;
+    } else {
+      // Direct API call (will fail due to CORS, but kept for reference)
+      if (!API_KEY) {
+        throw new Error(
+          'SMM API Key is not configured. Please set up a proxy server or configure REACT_APP_SMM_API_KEY.'
+        );
+      }
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`API request failed: ${response.status} ${response.statusText}. ${errorText}`);
+      const formData = new URLSearchParams();
+      formData.append('key', API_KEY);
+      Object.keys(params).forEach(key => {
+        if (params[key] !== undefined && params[key] !== null) {
+          formData.append(key, params[key]);
+        }
+      });
+
+      const response = await fetch(SMM_API_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: formData.toString(),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`API request failed: ${response.status} ${response.statusText}. ${errorText}`);
+      }
+
+      const data = await response.json();
+      return data;
     }
-
-    const data = await response.json();
-    return data;
   } catch (error) {
     console.error('SMM API Error:', error);
     
-    // Provide more helpful error messages
+    // Provide helpful error messages
     if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
-      throw new Error(
-        'CORS Error: Cannot connect to SMM API from browser. ' +
-        'This API requires a backend proxy. Please set up a backend endpoint or use the "Add Service" button to manually add services.'
-      );
-    }
-    
-    if (error.name === 'TypeError' && error.message.includes('fetch')) {
-      throw new Error(
-        'Network Error: Unable to reach SMM API. Please check your internet connection and API endpoint.'
-      );
+      if (USE_PROXY) {
+        throw new Error(
+          `Cannot connect to proxy server at ${PROXY_URL}. ` +
+          'Please ensure the proxy server is running and REACT_APP_PROXY_URL is set correctly.'
+        );
+      } else {
+        throw new Error(
+          'CORS Error: Cannot connect to SMM API from browser. ' +
+          'Please set up a proxy server by setting REACT_APP_PROXY_URL in your .env file.'
+        );
+      }
     }
     
     throw error;
