@@ -48,7 +48,7 @@ export async function getBalance() {
 /**
  * Create a payment transaction
  * @param {string} phoneNumber - Recipient's phone number
- * @param {number} amount - Amount in smallest currency unit
+ * @param {number} amount - Amount in regular TZS (not smallest units)
  * @param {string} recipientName - Recipient's full name
  * @returns {Promise<Object>} Transaction response with tranID
  */
@@ -65,10 +65,13 @@ export async function createTransaction(phoneNumber, amount, recipientName) {
       throw new Error('Missing required fields: phoneNumber, amount, recipientName');
     }
 
-    if (amount <= 0) {
+    // Convert to number and validate
+    const amountNum = parseFloat(amount);
+    if (isNaN(amountNum) || amountNum <= 0) {
       throw new Error('Amount must be greater than 0');
     }
 
+    // FastLipa API expects amount as integer in regular TZS
     const response = await fetch(`${FASTLIPA_API_URL}/create-transaction`, {
       method: 'POST',
       headers: {
@@ -77,7 +80,7 @@ export async function createTransaction(phoneNumber, amount, recipientName) {
       },
       body: JSON.stringify({
         number: phoneNumber,
-        amount: parseInt(amount),
+        amount: Math.round(amountNum), // Round to nearest integer TZS
         name: recipientName,
       }),
     });

@@ -35,6 +35,18 @@ service cloud.firestore {
       allow read, write: if request.auth != null;
     }
 
+    // Transactions subcollection - users can manage their own transactions
+    match /users/{userId}/transactions/{transactionId} {
+      // Allow users to read their own transactions
+      allow read: if request.auth != null && request.auth.uid == userId;
+
+      // Allow users to create and update their own transactions
+      allow create, update: if request.auth != null && request.auth.uid == userId;
+
+      // Allow admins to read all transactions
+      allow read: if isAdmin();
+    }
+
     // Default deny all
     match /{document=**} {
       allow read, write: if false;

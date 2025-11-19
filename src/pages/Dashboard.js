@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import Deposit from './Deposit';
+import Transactions from './Transactions';
 import '../styles/Dashboard.css';
 
 function Dashboard() {
@@ -282,7 +283,7 @@ function Dashboard() {
             </div>
 
             <div className="nav-item-wrapper">
-              <button 
+              <button
                 className={`nav-item ${activeNav === 'deposit' ? 'active' : ''}`}
                 onClick={() => handleNavClick('deposit')}
               >
@@ -290,6 +291,22 @@ function Dashboard() {
                   <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
                 </svg>
                 <span>Deposit</span>
+              </button>
+            </div>
+
+            <div className="nav-item-wrapper">
+              <button
+                className={`nav-item ${activeNav === 'transactions' ? 'active' : ''}`}
+                onClick={() => handleNavClick('transactions')}
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M13 2H3v20h18V8z"></path>
+                  <polyline points="3 8 21 8"></polyline>
+                  <polyline points="13 2 13 8"></polyline>
+                  <line x1="8" y1="13" x2="16" y2="13"></line>
+                  <line x1="8" y1="17" x2="16" y2="17"></line>
+                </svg>
+                <span>Transactions</span>
               </button>
             </div>
 
@@ -337,7 +354,8 @@ function Dashboard() {
         {/* Main Content */}
         <main className="main-content">
           {activeNav === 'deposit' && <Deposit />}
-          {activeNav !== 'deposit' && (
+          {activeNav === 'transactions' && <Transactions />}
+          {activeNav !== 'deposit' && activeNav !== 'transactions' && (
             <div className="content-placeholder">
               <h1>Welcome to SMMTZ Dashboard</h1>
               <p>Select a menu item from the sidebar to get started</p>

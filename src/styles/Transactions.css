@@ -7,7 +7,7 @@
 }
 
 .transactions-wrapper {
-  max-width: 800px;
+  max-width: 900px;
   margin: 0 auto;
 }
 
@@ -52,6 +52,17 @@
   margin-top: 2px;
 }
 
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 /* Filter */
 .trans-filter {
   margin-bottom: 1.5rem;
@@ -67,6 +78,12 @@
   cursor: pointer;
   transition: all 0.3s ease;
   width: 100%;
+  max-width: 300px;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23666' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 1rem center;
+  padding-right: 2.5rem;
 }
 
 .filter-select:hover {
@@ -131,161 +148,219 @@
 .trans-card {
   background: var(--card-bg);
   border: 1px solid var(--border-color);
-  border-radius: 10px;
-  padding: 1rem;
-  display: flex;
-  align-items: center;
-  gap: 1rem;
+  border-radius: 12px;
+  padding: 1.25rem;
   transition: all 0.3s ease;
   cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
 }
 
 .trans-card:hover {
   border-color: var(--accent-primary);
-  box-shadow: 0 4px 12px rgba(27, 79, 255, 0.1);
+  box-shadow: 0 4px 16px rgba(27, 79, 255, 0.12);
   transform: translateY(-2px);
+}
+
+.trans-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1.5rem;
+  width: 100%;
 }
 
 .trans-card-left {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 1rem;
   flex: 1;
   min-width: 0;
 }
 
 .trans-icon {
-  width: 50px;
-  height: 50px;
-  border-radius: 50%;
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  color: white;
+  transition: transform 0.3s ease;
+}
+
+.trans-card:hover .trans-icon {
+  transform: scale(1.05);
 }
 
 .trans-card:has(.status-success) .trans-icon {
-  background: rgba(34, 197, 94, 0.2);
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.15), rgba(34, 197, 94, 0.25));
   color: #22c55e;
 }
 
 .trans-card:has(.status-pending) .trans-icon {
-  background: rgba(251, 146, 60, 0.2);
+  background: linear-gradient(135deg, rgba(251, 146, 60, 0.15), rgba(251, 146, 60, 0.25));
   color: #f97316;
 }
 
 .trans-card:has(.status-error) .trans-icon {
-  background: rgba(239, 68, 68, 0.2);
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(239, 68, 68, 0.25));
   color: #ef4444;
 }
 
 .trans-info {
   flex: 1;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
 }
 
 .trans-id {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.trans-id-label {
+  font-size: 0.75rem;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 600;
+}
+
+.trans-id-value {
   font-weight: 600;
   color: var(--text-primary);
   font-size: 0.95rem;
   word-break: break-all;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  background: var(--bg-secondary);
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
+  display: inline-block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .trans-phone {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
   color: var(--text-secondary);
-  font-size: 0.85rem;
+  font-size: 0.875rem;
   margin-top: 0.25rem;
+}
+
+.trans-phone svg {
+  flex-shrink: 0;
+  opacity: 0.6;
 }
 
 .trans-card-right {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: 0.5rem;
+  gap: 0.75rem;
   flex-shrink: 0;
+  text-align: right;
 }
 
 .trans-amount {
   font-weight: 700;
-  font-size: 1.1rem;
+  font-size: 1.25rem;
   color: #22c55e;
+  white-space: nowrap;
 }
 
 .trans-status {
-  padding: 0.3rem 0.6rem;
-  border-radius: 4px;
+  padding: 0.4rem 0.8rem;
+  border-radius: 6px;
   font-size: 0.75rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  white-space: nowrap;
 }
 
 .trans-status.status-success {
-  background: rgba(34, 197, 94, 0.1);
+  background: rgba(34, 197, 94, 0.15);
   color: #22c55e;
+  border: 1px solid rgba(34, 197, 94, 0.3);
 }
 
 .trans-status.status-pending {
-  background: rgba(251, 146, 60, 0.1);
+  background: rgba(251, 146, 60, 0.15);
   color: #f97316;
+  border: 1px solid rgba(251, 146, 60, 0.3);
 }
 
 .trans-status.status-error {
-  background: rgba(239, 68, 68, 0.1);
+  background: rgba(239, 68, 68, 0.15);
   color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.3);
 }
 
 .trans-status.status-default {
-  background: rgba(107, 114, 128, 0.1);
+  background: rgba(107, 114, 128, 0.15);
   color: var(--text-secondary);
+  border: 1px solid rgba(107, 114, 128, 0.3);
 }
 
 .trans-card-footer {
   width: 100%;
   padding-top: 0.75rem;
   border-top: 1px solid var(--border-color);
+  margin-top: 0.25rem;
 }
 
 .trans-date {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
   font-size: 0.8rem;
   color: var(--text-tertiary);
-  text-align: right;
+  font-weight: 500;
+}
+
+.trans-date svg {
+  flex-shrink: 0;
+  opacity: 0.6;
 }
 
 /* Transaction Summary */
 .trans-summary {
   background: var(--card-bg);
   border: 1px solid var(--border-color);
-  border-radius: 10px;
+  border-radius: 12px;
   padding: 1.5rem;
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
 .summary-item {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding-bottom: 1rem;
-  border-bottom: 1px solid var(--border-color);
-}
-
-.summary-item:nth-child(n+3) {
-  border-bottom: none;
+  flex-direction: column;
+  gap: 0.5rem;
 }
 
 .summary-label {
   color: var(--text-secondary);
-  font-weight: 600;
-  font-size: 0.9rem;
+  font-weight: 500;
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .summary-value {
   color: var(--text-primary);
   font-weight: 700;
-  font-size: 1rem;
+  font-size: 1.25rem;
 }
 
 .loading-state {
@@ -316,40 +391,51 @@
     padding: 1.5rem 1rem;
   }
 
+  .transactions-wrapper {
+    max-width: 100%;
+  }
+
   .trans-header h1 {
     font-size: 1.5rem;
   }
 
   .trans-card {
-    flex-wrap: wrap;
+    padding: 1rem;
   }
 
-  .trans-card-left {
-    width: 100%;
-    margin-bottom: 0.5rem;
+  .trans-card-header {
+    flex-direction: column;
+    gap: 1rem;
   }
 
   .trans-card-right {
     width: 100%;
     align-items: flex-start;
+    flex-direction: row;
+    justify-content: space-between;
     padding-top: 0.75rem;
     border-top: 1px solid var(--border-color);
   }
 
   .trans-card-footer {
-    width: 100%;
     padding-top: 0.5rem;
-    margin-top: 0.5rem;
-    border-top: none;
+    margin-top: 0;
   }
 
   .trans-summary {
     grid-template-columns: 1fr;
-    gap: 1rem;
+    gap: 1.25rem;
+    padding: 1.25rem;
   }
 
   .summary-item {
-    padding-bottom: 0.75rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border-color);
+  }
+
+  .summary-item:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
   }
 }
 
@@ -366,6 +452,10 @@
     font-size: 0.9rem;
   }
 
+  .filter-select {
+    max-width: 100%;
+  }
+
   .empty-state {
     padding: 2rem 1.25rem;
   }
@@ -380,7 +470,7 @@
   }
 
   .trans-card {
-    padding: 0.75rem;
+    padding: 0.875rem;
   }
 
   .trans-icon {
@@ -393,36 +483,42 @@
     height: 20px;
   }
 
-  .trans-id {
+  .trans-id-label {
+    font-size: 0.7rem;
+  }
+
+  .trans-id-value {
     font-size: 0.85rem;
+    padding: 0.2rem 0.4rem;
   }
 
   .trans-phone {
-    font-size: 0.75rem;
+    font-size: 0.8rem;
   }
 
   .trans-amount {
-    font-size: 0.95rem;
+    font-size: 1.1rem;
+  }
+
+  .trans-status {
+    font-size: 0.7rem;
+    padding: 0.35rem 0.7rem;
   }
 
   .trans-date {
     font-size: 0.75rem;
   }
 
-  .filter-select {
-    padding: 0.6rem 0.8rem;
-    font-size: 0.9rem;
-  }
-
   .trans-summary {
     padding: 1rem;
+    gap: 1rem;
   }
 
   .summary-label {
-    font-size: 0.85rem;
+    font-size: 0.8rem;
   }
 
   .summary-value {
-    font-size: 0.95rem;
+    font-size: 1.1rem;
   }
 }

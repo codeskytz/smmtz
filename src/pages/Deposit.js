@@ -24,6 +24,7 @@ const Deposit = () => {
   const [pollingTransactionId, setPollingTransactionId] = useState('');
   const [pollTimeRemaining, setPollTimeRemaining] = useState(180); // 3 minutes in seconds
   const [isPolling, setIsPolling] = useState(false);
+  const [currentTransactionAmount, setCurrentTransactionAmount] = useState(0); // Store amount in smallest units
 
   // Redirect if not logged in
   useEffect(() => {
@@ -59,13 +60,15 @@ const Deposit = () => {
 
           if (status === 'COMPLETED') {
             // Transaction completed - update balance
-            await saveTransaction(pollingTransactionId, 'COMPLETED', response.data.amount);
+            // Use the stored transaction amount (already in smallest units)
+            await saveTransaction(pollingTransactionId, 'COMPLETED', currentTransactionAmount);
             setSuccess('✓ Payment completed successfully! Your balance has been updated.');
             setIsPolling(false);
             clearInterval(pollInterval);
           } else if (status === 'FAILED') {
             // Transaction failed
-            await saveTransaction(pollingTransactionId, 'FAILED', response.data.amount);
+            // Use the stored transaction amount (already in smallest units)
+            await saveTransaction(pollingTransactionId, 'FAILED', currentTransactionAmount);
             setError('✗ Payment failed. Please try again.');
             setIsPolling(false);
             clearInterval(pollInterval);
@@ -82,7 +85,8 @@ const Deposit = () => {
       if (isPolling) {
         setIsPolling(false);
         clearInterval(pollInterval);
-        saveTransaction(pollingTransactionId, 'FAILED', 0);
+        // Use the stored transaction amount
+        saveTransaction(pollingTransactionId, 'FAILED', currentTransactionAmount);
         setError('Payment confirmation timeout. Transaction marked as failed. Please try again.');
       }
     }, 180000); // 3 minutes
@@ -103,17 +107,25 @@ const Deposit = () => {
       clearInterval(timerInterval);
       clearTimeout(timeoutId);
     };
-  }, [isPolling, pollingTransactionId]);
+  }, [isPolling, pollingTransactionId, currentTransactionAmount]);
 
   const formatDisplayAmount = (value) => {
     if (!value) return '';
+    // Balance is stored in smallest units (cents), so divide by 100 for display
     return (value / 100).toFixed(2);
   };
 
-  // Convert display amount to smallest unit
+  // Convert display amount to smallest unit (for storing in database)
+  // Note: FastLipa API expects amount in regular TZS, not smallest units
   const convertToSmallestUnit = (displayValue) => {
     if (!displayValue) return 0;
     return Math.round(parseFloat(displayValue) * 100);
+  };
+
+  // Get amount in regular TZS (for API calls)
+  const getAmountInTZS = (displayValue) => {
+    if (!displayValue) return 0;
+    return parseFloat(displayValue);
   };
 
   // Save transaction to Firestore
@@ -172,12 +184,15 @@ const Deposit = () => {
       return false;
     }
 
-    if (!amount || amount <= 0) {
+    // Convert amount to number for validation
+    const amountNum = parseFloat(amount);
+    
+    if (!amount || isNaN(amountNum) || amountNum <= 0) {
       setError('Please enter a valid amount');
       return false;
     }
 
-    if (amount < 200) {
+    if (amountNum < 200) {
       setError('Minimum deposit amount is 200 TZS');
       return false;
     }
@@ -208,12 +223,15 @@ const Deposit = () => {
     try {
       // Format phone number
       const formattedPhone = PaymentService.formatPhoneNumber(phoneNumber);
+      // FastLipa API expects amount in regular TZS, not smallest units
+      const amountInTZS = getAmountInTZS(amount);
+      // For storing in database, we need smallest units
       const smallestUnitAmount = convertToSmallestUnit(amount);
 
-      // Create transaction with FastLipa
+      // Create transaction with FastLipa (send amount in regular TZS)
       const response = await PaymentService.createTransaction(
         formattedPhone,
-        smallestUnitAmount,
+        amountInTZS,
         fullName
       );
 
@@ -223,6 +241,9 @@ const Deposit = () => {
 
         // Save initial transaction record
         await saveTransaction(tranID, 'PENDING', smallestUnitAmount);
+
+        // Store the transaction amount for use during polling
+        setCurrentTransactionAmount(smallestUnitAmount);
 
         // Show payment initiated message
         setSuccess(
