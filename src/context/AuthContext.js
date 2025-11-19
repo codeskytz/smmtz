@@ -12,7 +12,7 @@ import {
   verifyPasswordResetCode,
 } from 'firebase/auth';
 import { auth, db } from '../config/firebase';
-import { setDoc, doc, getDoc } from 'firebase/firestore';
+import { setDoc, doc, getDoc, collection, getDocs, query, where, updateDoc } from 'firebase/firestore';
 
 const AuthContext = createContext();
 
@@ -229,6 +229,85 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // Admin: Get all users
+  const getAllUsers = async () => {
+    try {
+      setError(null);
+      const usersCollection = collection(db, 'users');
+      const usersSnapshot = await getDocs(usersCollection);
+      const usersList = usersSnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      return usersList;
+    } catch (err) {
+      setError(err.message);
+      throw err;
+    }
+  };
+
+  // Admin: Promote user to admin
+  const promoteUserToAdmin = async (userId) => {
+    try {
+      setError(null);
+      const userRef = doc(db, 'users', userId);
+      await updateDoc(userRef, {
+        role: 'admin'
+      });
+      return { success: true, message: 'User promoted to admin successfully' };
+    } catch (err) {
+      setError(err.message);
+      throw err;
+    }
+  };
+
+  // Admin: Demote admin to user
+  const demoteAdminToUser = async (userId) => {
+    try {
+      setError(null);
+      const userRef = doc(db, 'users', userId);
+      await updateDoc(userRef, {
+        role: 'user'
+      });
+      return { success: true, message: 'Admin demoted to user successfully' };
+    } catch (err) {
+      setError(err.message);
+      throw err;
+    }
+  };
+
+  // Admin: Suspend user
+  const suspendUser = async (userId) => {
+    try {
+      setError(null);
+      const userRef = doc(db, 'users', userId);
+      await updateDoc(userRef, {
+        suspended: true,
+        suspendedAt: new Date()
+      });
+      return { success: true, message: 'User suspended successfully' };
+    } catch (err) {
+      setError(err.message);
+      throw err;
+    }
+  };
+
+  // Admin: Unsuspend user
+  const unsuspendUser = async (userId) => {
+    try {
+      setError(null);
+      const userRef = doc(db, 'users', userId);
+      await updateDoc(userRef, {
+        suspended: false,
+        suspendedAt: null
+      });
+      return { success: true, message: 'User unsuspended successfully' };
+    } catch (err) {
+      setError(err.message);
+      throw err;
+    }
+  };
+
   const value = {
     user,
     userRole,
@@ -242,6 +321,11 @@ export const AuthProvider = ({ children }) => {
     forgotPassword,
     resetPassword,
     verifyResetCode,
+    getAllUsers,
+    promoteUserToAdmin,
+    demoteAdminToUser,
+    suspendUser,
+    unsuspendUser,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

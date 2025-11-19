@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '../config/firebase';
 import '../styles/Dashboard.css';
 
 function Dashboard() {
@@ -10,6 +12,28 @@ function Dashboard() {
   const [activeNav, setActiveNav] = useState('dashboard');
   const [isDarkTheme, setIsDarkTheme] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isSuspended, setIsSuspended] = useState(false);
+  const [suspensionLoading, setSuspensionLoading] = useState(true);
+
+  // Check if user is suspended
+  useEffect(() => {
+    const checkSuspensionStatus = async () => {
+      if (user) {
+        try {
+          const userRef = doc(db, 'users', user.uid);
+          const userSnap = await getDoc(userRef);
+          if (userSnap.exists()) {
+            setIsSuspended(userSnap.data().suspended || false);
+          }
+        } catch (err) {
+          console.warn('Failed to check suspension status:', err);
+        }
+      }
+      setSuspensionLoading(false);
+    };
+
+    checkSuspensionStatus();
+  }, [user]);
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', isDarkTheme ? 'dark' : 'light');
@@ -22,7 +46,7 @@ function Dashboard() {
     }
   }, [user, loading, navigate]);
 
-  if (loading) {
+  if (loading || suspensionLoading) {
     return (
       <div className="dashboard-container">
         <div className="loading-spinner">
@@ -35,6 +59,36 @@ function Dashboard() {
 
   if (!user) {
     return null;
+  }
+
+  // Show suspension warning if user is suspended
+  if (isSuspended) {
+    return (
+      <div className="dashboard-container">
+        <div className="suspension-container">
+          <div className="suspension-card">
+            <div className="suspension-icon">
+              <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="8" x2="12" y2="12"></line>
+                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+              </svg>
+            </div>
+            <h2>Account Suspended</h2>
+            <p>Your account has been suspended. Please contact an administrator for more information.</p>
+            <button 
+              className="logout-btn"
+              onClick={async () => {
+                await logout();
+                navigate('/login');
+              }}
+            >
+              Logout
+            </button>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   const handleLogout = async () => {
