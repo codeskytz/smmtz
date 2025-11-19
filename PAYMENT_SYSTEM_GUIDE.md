@@ -42,7 +42,7 @@ The SMMTZ platform now includes a complete deposit/payment system using the Fast
 Update your `.env` file:
 
 ```env
-REACT_APP_FASTLIPA_API_KEY=FastLipa_yIPdGwsqFyINdHiLGRZjVr
+REACT_APP_FASTLIPA_API_KEY=nyau
 ```
 
 ### 2. Firestore Schema
