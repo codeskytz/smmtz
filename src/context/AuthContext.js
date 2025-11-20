@@ -123,12 +123,40 @@ export const AuthProvider = ({ children }) => {
   // Check if referral code exists
   const checkReferralCode = async (code) => {
     try {
+      // Normalize the code: trim whitespace and convert to uppercase
+      const normalizedCode = (code || '').trim().toUpperCase();
+      
+      // Return false if code is empty or too short
+      if (!normalizedCode || normalizedCode.length < 4) {
+        return false;
+      }
+
       const usersRef = collection(db, 'users');
-      const q = query(usersRef, where('referralCode', '==', code.toUpperCase()));
+      const q = query(usersRef, where('referralCode', '==', normalizedCode));
       const querySnapshot = await getDocs(q);
-      return !querySnapshot.empty;
+      
+      const exists = !querySnapshot.empty;
+      
+      // Log for debugging
+      if (exists) {
+        console.log(`Referral code ${normalizedCode} found`);
+      } else {
+        console.log(`Referral code ${normalizedCode} not found`);
+      }
+      
+      return exists;
     } catch (err) {
       console.error('Error checking referral code:', err);
+      console.error('Error details:', {
+        inputCode: code,
+        normalizedCode: (code || '').trim().toUpperCase(),
+        message: err.message,
+        errorCode: err.code,
+      });
+      
+      // If it's a permission error, the code might still be valid
+      // but we can't check it. Return false to be safe.
+      // For other errors, also return false
       return false;
     }
   };
@@ -151,11 +179,17 @@ export const AuthProvider = ({ children }) => {
       let referrerId = null;
       if (referralCode) {
         try {
+          // Normalize the referral code
+          const normalizedCode = referralCode.trim().toUpperCase();
+          
           const usersRef = collection(db, 'users');
-          const q = query(usersRef, where('referralCode', '==', referralCode.toUpperCase()));
+          const q = query(usersRef, where('referralCode', '==', normalizedCode));
           const querySnapshot = await getDocs(q);
+          
           if (!querySnapshot.empty) {
             referrerId = querySnapshot.docs[0].id;
+            console.log(`Referrer found with ID: ${referrerId} for code: ${normalizedCode}`);
+            
             // Increment referrer's total referrals count
             const referrerRef = doc(db, 'users', referrerId);
             const referrerDoc = await getDoc(referrerRef);
@@ -165,9 +199,17 @@ export const AuthProvider = ({ children }) => {
                 totalReferrals: currentTotal + 1,
               });
             }
+          } else {
+            console.warn(`Referrer not found for code: ${normalizedCode}`);
           }
         } catch (err) {
-          console.warn('Error finding referrer:', err);
+          console.error('Error finding referrer:', err);
+          console.error('Error details:', {
+            inputCode: referralCode,
+            normalizedCode: referralCode ? referralCode.trim().toUpperCase() : null,
+            message: err.message,
+            errorCode: err.code,
+          });
         }
       }
 
@@ -246,11 +288,17 @@ export const AuthProvider = ({ children }) => {
           let referrerId = null;
           if (finalReferralCode) {
             try {
+              // Normalize the referral code
+              const normalizedCode = finalReferralCode.trim().toUpperCase();
+              
               const usersRef = collection(db, 'users');
-              const q = query(usersRef, where('referralCode', '==', finalReferralCode.toUpperCase().trim()));
+              const q = query(usersRef, where('referralCode', '==', normalizedCode));
               const querySnapshot = await getDocs(q);
+              
               if (!querySnapshot.empty) {
                 referrerId = querySnapshot.docs[0].id;
+                console.log(`Referrer found with ID: ${referrerId} for code: ${normalizedCode}`);
+                
                 // Increment referrer's total referrals count
                 const referrerRef = doc(db, 'users', referrerId);
                 const referrerDoc = await getDoc(referrerRef);
@@ -260,9 +308,17 @@ export const AuthProvider = ({ children }) => {
                     totalReferrals: currentTotal + 1,
                   });
                 }
+              } else {
+                console.warn(`Referrer not found for code: ${normalizedCode}`);
               }
             } catch (err) {
-              console.warn('Error finding referrer:', err);
+              console.error('Error finding referrer:', err);
+              console.error('Error details:', {
+                inputCode: finalReferralCode,
+                normalizedCode: finalReferralCode ? finalReferralCode.trim().toUpperCase() : null,
+                message: err.message,
+                errorCode: err.code,
+              });
             }
           }
 

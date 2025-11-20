@@ -39,6 +39,9 @@ function Register() {
       // Validate the code
       checkReferralCode(upperCode).then(isValid => {
         setReferralCodeValid(isValid);
+      }).catch(err => {
+        console.error('Error validating referral code from URL:', err);
+        setReferralCodeValid(false);
       });
     }
   }, [searchParams, checkReferralCode]);
@@ -94,12 +97,17 @@ function Register() {
   };
 
   const handleReferralCodeChange = async (e) => {
-    const code = e.target.value.toUpperCase();
+    const code = e.target.value.toUpperCase().trim();
     setFormData(prev => ({ ...prev, referralCode: code }));
     
     if (code.length >= 4) {
-      const isValid = await checkReferralCode(code);
-      setReferralCodeValid(isValid);
+      try {
+        const isValid = await checkReferralCode(code);
+        setReferralCodeValid(isValid);
+      } catch (err) {
+        console.error('Error validating referral code:', err);
+        setReferralCodeValid(false);
+      }
     } else {
       setReferralCodeValid(null);
     }

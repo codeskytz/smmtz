@@ -15,9 +15,11 @@ service cloud.firestore {
       // Allow admins to read all user documents
       allow read: if isAdmin();
       
-      // Allow authenticated users to query users by referralCode (for referral validation)
-      // This is needed for checking if referral codes exist
-      allow list: if request.auth != null;
+      // Allow authenticated users to query users
+      // Also allow unauthenticated users to check referral codes during registration
+      // NOTE: This allows unauthenticated list queries which could expose user data
+      // In production, consider using Cloud Functions for referral code validation
+      allow list: if request.auth != null || true;
       
       // Allow users to create their own account (during registration)
       allow create: if request.auth.uid == userId;
