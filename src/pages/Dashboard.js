@@ -8,6 +8,8 @@ import Transactions from './Transactions';
 import Services from './Services';
 import UserDashboard from './UserDashboard';
 import NewOrder from './NewOrder';
+import ReferralDashboard from './ReferralDashboard';
+import WithdrawalRequest from './WithdrawalRequest';
 import '../styles/Dashboard.css';
 
 function Dashboard() {
@@ -374,7 +376,9 @@ function Dashboard() {
           {activeNav === 'deposit' && <Deposit />}
           {activeNav === 'transactions' && <Transactions />}
           {activeNav === 'services' && <Services />}
-          {activeNav !== 'dashboard' && activeNav !== 'new-order' && activeNav !== 'deposit' && activeNav !== 'transactions' && activeNav !== 'services' && (
+          {activeNav === 'referrals' && <ReferralDashboard />}
+          {activeNav === 'withdraw' && <WithdrawalRequest />}
+          {activeNav !== 'dashboard' && activeNav !== 'new-order' && activeNav !== 'deposit' && activeNav !== 'transactions' && activeNav !== 'services' && activeNav !== 'referrals' && activeNav !== 'withdraw' && (
             <div className="content-placeholder">
               <h1>Welcome to SMMTZ Dashboard</h1>
               <p>Select a menu item from the sidebar to get started</p>

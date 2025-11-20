@@ -1,19 +1,33 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import '../styles/Auth.css';
 
 function Register() {
   const navigate = useNavigate();
-  const { register, signInWithGoogle, error } = useAuth();
+  const [searchParams] = useSearchParams();
+  const { register, signInWithGoogle, error, checkReferralCode } = useAuth();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     password: '',
-    confirmPassword: ''
+    confirmPassword: '',
+    referralCode: ''
   });
   const [loading, setLoading] = useState(false);
   const [regError, setRegError] = useState('');
+  const [referralCodeValid, setReferralCodeValid] = useState(null);
+
+  // Check for referral code in URL
+  useEffect(() => {
+    const refCode = searchParams.get('ref');
+    if (refCode) {
+      setFormData(prev => ({ ...prev, referralCode: refCode.toUpperCase() }));
+      checkReferralCode(refCode).then(isValid => {
+        setReferralCodeValid(isValid);
+      });
+    }
+  }, [searchParams, checkReferralCode]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -40,7 +54,8 @@ function Register() {
     setLoading(true);
 
     try {
-      await register(formData.email, formData.password, formData.name);
+      const refCode = formData.referralCode.trim() || null;
+      await register(formData.email, formData.password, formData.name, 'user', refCode);
       navigate('/dashboard');
     } catch (err) {
       setRegError(err.message);
@@ -54,12 +69,25 @@ function Register() {
     setLoading(true);
 
     try {
-      await signInWithGoogle();
+      const refCode = formData.referralCode.trim() || null;
+      await signInWithGoogle(refCode);
       navigate('/dashboard');
     } catch (err) {
       setRegError(err.message);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleReferralCodeChange = async (e) => {
+    const code = e.target.value.toUpperCase();
+    setFormData(prev => ({ ...prev, referralCode: code }));
+    
+    if (code.length >= 4) {
+      const isValid = await checkReferralCode(code);
+      setReferralCodeValid(isValid);
+    } else {
+      setReferralCodeValid(null);
     }
   };
 
@@ -130,6 +158,39 @@ function Register() {
             required
             disabled={loading}
           />
+          <div style={{ position: 'relative', width: '100%' }}>
+            <input
+              type="text"
+              name="referralCode"
+              className="input"
+              placeholder="Referral Code (Optional)"
+              value={formData.referralCode}
+              onChange={handleReferralCodeChange}
+              maxLength="8"
+              disabled={loading}
+              style={{
+                textTransform: 'uppercase',
+                paddingRight: referralCodeValid !== null ? '40px' : '16px'
+              }}
+            />
+            {referralCodeValid !== null && (
+              <span style={{
+                position: 'absolute',
+                right: '12px',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                color: referralCodeValid ? '#22c55e' : '#ef4444',
+                fontSize: '18px'
+              }}>
+                {referralCodeValid ? '✓' : '✗'}
+              </span>
+            )}
+          </div>
+          {formData.referralCode && referralCodeValid === false && (
+            <p style={{ color: '#ef4444', fontSize: '0.85rem', marginTop: '-0.5rem', marginBottom: '0.5rem' }}>
+              Invalid referral code
+            </p>
+          )}
           <button type="submit" className="form-btn" disabled={loading}>
             {loading ? 'Creating Account...' : 'Sign up'}
           </button>

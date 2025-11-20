@@ -6,6 +6,7 @@ import { auth } from '../config/firebase';
 import UserManagement from './UserManagement';
 import AdminBalance from './AdminBalance';
 import AdminServices from './AdminServices';
+import AdminWithdrawals from './AdminWithdrawals';
 import '../styles/Dashboard.css';
 
 const AdminDashboard = () => {
@@ -240,6 +241,16 @@ const AdminDashboard = () => {
             <span>Services</span>
           </button>
           <button 
+            className={`nav-item ${activeNav === 'withdrawals' ? 'active' : ''}`} 
+            onClick={() => handleNavClick('withdrawals')}
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <line x1="12" y1="5" x2="12" y2="19"></line>
+              <polyline points="19 12 12 19 5 12"></polyline>
+            </svg>
+            <span>Withdrawals</span>
+          </button>
+          <button 
             className={`nav-item ${activeNav === 'reports' ? 'active' : ''}`} 
             onClick={() => handleNavClick('reports')}
           >
@@ -280,6 +291,7 @@ const AdminDashboard = () => {
           </div>
         )}
         {activeNav === 'services' && <AdminServices />}
+        {activeNav === 'withdrawals' && <AdminWithdrawals />}
         {activeNav === 'reports' && (
           <div className="content-placeholder">
             <h2>Reports</h2>

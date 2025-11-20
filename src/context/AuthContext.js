@@ -20,6 +20,7 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [userRole, setUserRole] = useState(null);
   const [userBalance, setUserBalance] = useState(0);
+  const [referralEarnings, setReferralEarnings] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -28,23 +29,32 @@ export const AuthProvider = ({ children }) => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       setUser(currentUser);
       
-      // Fetch user role from Firestore if user exists
+      // Fetch user role and balance from Firestore if user exists
       if (currentUser) {
         try {
           const userDocRef = doc(db, 'users', currentUser.uid);
           const userDocSnap = await getDoc(userDocRef);
           
           if (userDocSnap.exists()) {
-            setUserRole(userDocSnap.data().role || 'user');
+            const userData = userDocSnap.data();
+            setUserRole(userData.role || 'user');
+            setUserBalance(userData.balance || 0);
+            setReferralEarnings(userData.referralEarnings || 0);
           } else {
             setUserRole('user'); // Default role
+            setUserBalance(0);
+            setReferralEarnings(0);
           }
         } catch (err) {
-          console.warn('Failed to fetch user role:', err);
+          console.warn('Failed to fetch user data:', err);
           setUserRole('user'); // Default to user role on error
+          setUserBalance(0);
+          setReferralEarnings(0);
         }
       } else {
         setUserRole(null);
+        setUserBalance(0);
+        setReferralEarnings(0);
       }
       
       setLoading(false);
@@ -53,8 +63,31 @@ export const AuthProvider = ({ children }) => {
     return unsubscribe;
   }, []);
 
+  // Generate unique referral code
+  const generateReferralCode = () => {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let code = '';
+    for (let i = 0; i < 8; i++) {
+      code += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return code;
+  };
+
+  // Check if referral code exists
+  const checkReferralCode = async (code) => {
+    try {
+      const usersRef = collection(db, 'users');
+      const q = query(usersRef, where('referralCode', '==', code.toUpperCase()));
+      const querySnapshot = await getDocs(q);
+      return !querySnapshot.empty;
+    } catch (err) {
+      console.error('Error checking referral code:', err);
+      return false;
+    }
+  };
+
   // Register with email and password
-  const register = async (email, password, displayName, role = 'user') => {
+  const register = async (email, password, displayName, role = 'user', referralCode = null) => {
     try {
       setError(null);
       const res = await createUserWithEmailAndPassword(auth, email, password);
@@ -64,6 +97,40 @@ export const AuthProvider = ({ children }) => {
         displayName: displayName,
       });
 
+      // Generate unique referral code for new user
+      let userReferralCode = generateReferralCode();
+      let codeExists = await checkReferralCode(userReferralCode);
+      
+      // Ensure code is unique
+      while (codeExists) {
+        userReferralCode = generateReferralCode();
+        codeExists = await checkReferralCode(userReferralCode);
+      }
+
+      // Find referrer if referral code provided
+      let referrerId = null;
+      if (referralCode) {
+        try {
+          const usersRef = collection(db, 'users');
+          const q = query(usersRef, where('referralCode', '==', referralCode.toUpperCase()));
+          const querySnapshot = await getDocs(q);
+          if (!querySnapshot.empty) {
+            referrerId = querySnapshot.docs[0].id;
+            // Increment referrer's total referrals count
+            const referrerRef = doc(db, 'users', referrerId);
+            const referrerDoc = await getDoc(referrerRef);
+            if (referrerDoc.exists()) {
+              const currentTotal = referrerDoc.data().totalReferrals || 0;
+              await updateDoc(referrerRef, {
+                totalReferrals: currentTotal + 1,
+              });
+            }
+          }
+        } catch (err) {
+          console.warn('Error finding referrer:', err);
+        }
+      }
+
       // Try to save user data to Firestore, but don't block if it fails
       try {
         await setDoc(doc(db, 'users', res.user.uid), {
@@ -71,6 +138,10 @@ export const AuthProvider = ({ children }) => {
           email: email,
           displayName: displayName,
           role: role,
+          referralCode: userReferralCode,
+          referrerId: referrerId,
+          referralEarnings: 0, // In smallest units (cents)
+          totalReferrals: 0,
           createdAt: new Date(),
           photoURL: res.user.photoURL || null,
         });
@@ -102,7 +173,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   // Google Sign In
-  const signInWithGoogle = async () => {
+  const signInWithGoogle = async (referralCode = null) => {
     try {
       setError(null);
       const provider = new GoogleAuthProvider();
@@ -115,11 +186,49 @@ export const AuthProvider = ({ children }) => {
         const userDocSnap = await getDoc(userDocRef);
         
         if (!userDocSnap.exists()) {
+          // Generate unique referral code for new user
+          let userReferralCode = generateReferralCode();
+          let codeExists = await checkReferralCode(userReferralCode);
+          
+          // Ensure code is unique
+          while (codeExists) {
+            userReferralCode = generateReferralCode();
+            codeExists = await checkReferralCode(userReferralCode);
+          }
+
+          // Find referrer if referral code provided
+          let referrerId = null;
+          if (referralCode) {
+            try {
+              const usersRef = collection(db, 'users');
+              const q = query(usersRef, where('referralCode', '==', referralCode.toUpperCase()));
+              const querySnapshot = await getDocs(q);
+              if (!querySnapshot.empty) {
+                referrerId = querySnapshot.docs[0].id;
+                // Increment referrer's total referrals count
+                const referrerRef = doc(db, 'users', referrerId);
+                const referrerDoc = await getDoc(referrerRef);
+                if (referrerDoc.exists()) {
+                  const currentTotal = referrerDoc.data().totalReferrals || 0;
+                  await updateDoc(referrerRef, {
+                    totalReferrals: currentTotal + 1,
+                  });
+                }
+              }
+            } catch (err) {
+              console.warn('Error finding referrer:', err);
+            }
+          }
+
           await setDoc(userDocRef, {
             uid: res.user.uid,
             email: res.user.email,
             displayName: res.user.displayName,
             role: 'user',
+            referralCode: userReferralCode,
+            referrerId: referrerId,
+            referralEarnings: 0,
+            totalReferrals: 0,
             createdAt: new Date(),
             photoURL: res.user.photoURL || null,
           });

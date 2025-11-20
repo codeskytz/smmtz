@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { doc, getDoc, collection, setDoc } from 'firebase/firestore';
+import { doc, getDoc, collection, addDoc } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import SMMService from '../services/SMMService';
 import '../styles/NewOrder.css';
@@ -9,7 +9,7 @@ import '../styles/NewOrder.css';
 const NewOrder = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { user, userBalance, getUserBalance, withdrawFromBalance } = useAuth();
+  const { user, userBalance, getUserBalance, withdrawFromBalance, creditReferralEarnings } = useAuth();
   const [service, setService] = useState(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -164,9 +164,20 @@ const NewOrder = () => {
       // Deduct balance from user account
       await withdrawFromBalance(orderCost);
 
+      // Get user's referrer to credit 10% commission
+      const userDocRef = doc(db, 'users', user.uid);
+      const userDoc = await getDoc(userDocRef);
+      const referrerId = userDoc.exists() ? userDoc.data().referrerId : null;
+      
+      // Credit referrer with 10% commission
+      if (referrerId) {
+        const commission = Math.floor(orderCost * 0.1); // 10% commission
+        await creditReferralEarnings(referrerId, commission);
+      }
+
       // Save order to Firestore
-      const orderRef = doc(collection(db, 'users', user.uid, 'orders'));
-      await setDoc(orderRef, {
+      const ordersRef = collection(db, 'users', user.uid, 'orders');
+      await addDoc(ordersRef, {
         orderId: orderId.toString(),
         serviceId: service.id,
         serviceName: service.name,
