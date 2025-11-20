@@ -355,6 +355,34 @@ function Dashboard() {
             </div>
 
             <div className="nav-item-wrapper">
+              <button
+                className={`nav-item ${activeNav === 'referrals' ? 'active' : ''}`}
+                onClick={() => handleNavClick('referrals')}
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="9" cy="7" r="4"></circle>
+                  <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                  <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                </svg>
+                <span>Referrals</span>
+              </button>
+            </div>
+
+            <div className="nav-item-wrapper">
+              <button
+                className={`nav-item ${activeNav === 'withdraw' ? 'active' : ''}`}
+                onClick={() => handleNavClick('withdraw')}
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <line x1="12" y1="5" x2="12" y2="19"></line>
+                  <polyline points="19 12 12 19 5 12"></polyline>
+                </svg>
+                <span>Withdraw</span>
+              </button>
+            </div>
+
+            <div className="nav-item-wrapper">
               <button 
                 className={`nav-item ${activeNav === 'settings' ? 'active' : ''}`}
                 onClick={() => handleNavClick('settings')}

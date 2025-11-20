@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { getReferralCodeFromURL, storeReferralCode, getStoredReferralCode } from '../utils/referralUtils';
 import '../styles/Auth.css';
 
 function Register() {
@@ -18,12 +19,25 @@ function Register() {
   const [regError, setRegError] = useState('');
   const [referralCodeValid, setReferralCodeValid] = useState(null);
 
-  // Check for referral code in URL
+  // Check for referral code in URL and store it
   useEffect(() => {
-    const refCode = searchParams.get('ref');
+    // First check URL parameter
+    let refCode = searchParams.get('ref');
+    
+    // If no URL param, check sessionStorage
+    if (!refCode) {
+      refCode = getStoredReferralCode();
+    }
+    
     if (refCode) {
-      setFormData(prev => ({ ...prev, referralCode: refCode.toUpperCase() }));
-      checkReferralCode(refCode).then(isValid => {
+      const upperCode = refCode.toUpperCase().trim();
+      setFormData(prev => ({ ...prev, referralCode: upperCode }));
+      
+      // Store in sessionStorage for Google sign-up and future navigation
+      storeReferralCode(upperCode);
+      
+      // Validate the code
+      checkReferralCode(upperCode).then(isValid => {
         setReferralCodeValid(isValid);
       });
     }

@@ -88,6 +88,30 @@
 .earnings-note {
   font-size: 0.85rem;
   opacity: 0.8;
+  margin-bottom: 1rem;
+}
+
+.withdraw-btn {
+  margin-top: 1rem;
+  padding: 0.75rem 1.5rem;
+  background: rgba(255, 255, 255, 0.2);
+  border: 2px solid white;
+  border-radius: 8px;
+  color: white;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.3s ease;
+}
+
+.withdraw-btn:hover {
+  background: white;
+  color: var(--accent-primary);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
 /* Stats Grid */
@@ -136,6 +160,24 @@
 .stat-label {
   font-size: 0.9rem;
   color: var(--text-secondary);
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
+.stat-description {
+  font-size: 0.8rem;
+  color: var(--text-tertiary);
+  margin-top: 0.25rem;
+}
+
+.stat-card.highlight {
+  border: 2px solid var(--accent-primary);
+  background: linear-gradient(135deg, rgba(27, 79, 255, 0.05), rgba(27, 79, 255, 0.1));
+}
+
+.stat-icon.commission {
+  background: rgba(27, 79, 255, 0.1);
+  color: var(--accent-primary);
 }
 
 /* Referral Code Card */

@@ -11,6 +11,7 @@ const ReferralDashboard = () => {
   const [totalReferrals, setTotalReferrals] = useState(0);
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
+  const [copiedItem, setCopiedItem] = useState(null);
 
   useEffect(() => {
     if (user) {
@@ -43,11 +44,20 @@ const ReferralDashboard = () => {
     }
   };
 
-  const copyToClipboard = (text) => {
+  const copyToClipboard = (text, item) => {
     navigator.clipboard.writeText(text).then(() => {
       setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      setCopiedItem(item);
+      setTimeout(() => {
+        setCopied(false);
+        setCopiedItem(null);
+      }, 2000);
     });
+  };
+
+  const handleNavigateToWithdraw = () => {
+    const event = new CustomEvent('navigate', { detail: 'withdraw' });
+    window.dispatchEvent(event);
   };
 
   const earningsInTZS = (referralEarnings / 100).toFixed(2);
@@ -80,8 +90,17 @@ const ReferralDashboard = () => {
         </div>
         <div className="earnings-content">
           <div className="earnings-label">Total Referral Earnings</div>
-          <div className="earnings-amount">{earningsInTZS} TZS</div>
+          <div className="earnings-amount">{parseFloat(earningsInTZS).toLocaleString('en-TZ', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TZS</div>
           <div className="earnings-note">Minimum withdrawal: 5,000 TZS</div>
+          {parseFloat(earningsInTZS) >= 5000 && (
+            <button className="withdraw-btn" onClick={handleNavigateToWithdraw}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <polyline points="19 12 12 19 5 12"></polyline>
+              </svg>
+              Withdraw Now
+            </button>
+          )}
         </div>
       </div>
 
@@ -98,6 +117,7 @@ const ReferralDashboard = () => {
           </div>
           <div className="stat-value">{totalReferrals}</div>
           <div className="stat-label">Total Referrals</div>
+          <div className="stat-description">People you've invited</div>
         </div>
 
         <div className="stat-card">
@@ -107,8 +127,20 @@ const ReferralDashboard = () => {
               <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
             </svg>
           </div>
-          <div className="stat-value">{earningsInTZS} TZS</div>
+          <div className="stat-value">{parseFloat(earningsInTZS).toLocaleString('en-TZ', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TZS</div>
           <div className="stat-label">Available Earnings</div>
+          <div className="stat-description">Ready to withdraw</div>
+        </div>
+
+        <div className="stat-card highlight">
+          <div className="stat-icon commission">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+            </svg>
+          </div>
+          <div className="stat-value">10%</div>
+          <div className="stat-label">Commission Rate</div>
+          <div className="stat-description">Per order from referrals</div>
         </div>
       </div>
 
@@ -119,10 +151,10 @@ const ReferralDashboard = () => {
           <div className="code-value">{referralCode}</div>
           <button
             className="copy-btn"
-            onClick={() => copyToClipboard(referralCode)}
+            onClick={() => copyToClipboard(referralCode, 'code')}
             title="Copy code"
           >
-            {copied ? (
+            {copied && copiedItem === 'code' ? (
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <polyline points="20 6 9 17 4 12"></polyline>
               </svg>
@@ -134,7 +166,7 @@ const ReferralDashboard = () => {
             )}
           </button>
         </div>
-        {copied && <div className="copy-feedback">Copied!</div>}
+        {copied && copiedItem === 'code' && <div className="copy-feedback">Copied!</div>}
       </div>
 
       {/* Referral Link Card */}
@@ -149,10 +181,10 @@ const ReferralDashboard = () => {
           />
           <button
             className="copy-btn"
-            onClick={() => copyToClipboard(referralLink)}
+            onClick={() => copyToClipboard(referralLink, 'link')}
             title="Copy link"
           >
-            {copied ? (
+            {copied && copiedItem === 'link' ? (
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <polyline points="20 6 9 17 4 12"></polyline>
               </svg>

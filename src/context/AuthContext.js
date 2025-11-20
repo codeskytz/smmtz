@@ -40,6 +40,18 @@ export const AuthProvider = ({ children }) => {
             setUserRole(userData.role || 'user');
             setUserBalance(userData.balance || 0);
             setReferralEarnings(userData.referralEarnings || 0);
+            
+            // Ensure user has a referral code (for existing users who might not have one)
+            if (!userData.referralCode) {
+              try {
+                const newCode = await generateReferralCode(currentUser.uid);
+                await updateDoc(userDocRef, {
+                  referralCode: newCode,
+                });
+              } catch (err) {
+                console.warn('Error generating referral code for existing user:', err);
+              }
+            }
           } else {
             setUserRole('user'); // Default role
             setUserBalance(0);
@@ -63,13 +75,48 @@ export const AuthProvider = ({ children }) => {
     return unsubscribe;
   }, []);
 
-  // Generate unique referral code
-  const generateReferralCode = () => {
+  // Generate unique referral code with better uniqueness
+  const generateReferralCode = async (userId = null) => {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
     let code = '';
-    for (let i = 0; i < 8; i++) {
+    let attempts = 0;
+    const maxAttempts = 50;
+    
+    // If userId provided, use first 4 chars of userId hash + random
+    if (userId) {
+      // Create a simple hash from userId
+      let hash = 0;
+      for (let i = 0; i < userId.length; i++) {
+        hash = ((hash << 5) - hash) + userId.charCodeAt(i);
+        hash = hash & hash; // Convert to 32bit integer
+      }
+      const hashStr = Math.abs(hash).toString(36).toUpperCase().substring(0, 4);
+      code = hashStr;
+    }
+    
+    // Fill remaining characters randomly
+    while (code.length < 8) {
       code += chars.charAt(Math.floor(Math.random() * chars.length));
     }
+    
+    // Ensure code is unique
+    let codeExists = await checkReferralCode(code);
+    while (codeExists && attempts < maxAttempts) {
+      // Regenerate last 4 characters
+      code = code.substring(0, 4);
+      while (code.length < 8) {
+        code += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+      codeExists = await checkReferralCode(code);
+      attempts++;
+    }
+    
+    // If still not unique after max attempts, add timestamp
+    if (codeExists) {
+      const timestamp = Date.now().toString(36).toUpperCase().substring(0, 4);
+      code = code.substring(0, 4) + timestamp;
+    }
+    
     return code;
   };
 
@@ -98,14 +145,7 @@ export const AuthProvider = ({ children }) => {
       });
 
       // Generate unique referral code for new user
-      let userReferralCode = generateReferralCode();
-      let codeExists = await checkReferralCode(userReferralCode);
-      
-      // Ensure code is unique
-      while (codeExists) {
-        userReferralCode = generateReferralCode();
-        codeExists = await checkReferralCode(userReferralCode);
-      }
+      const userReferralCode = await generateReferralCode(res.user.uid);
 
       // Find referrer if referral code provided
       let referrerId = null;
@@ -186,22 +226,28 @@ export const AuthProvider = ({ children }) => {
         const userDocSnap = await getDoc(userDocRef);
         
         if (!userDocSnap.exists()) {
-          // Generate unique referral code for new user
-          let userReferralCode = generateReferralCode();
-          let codeExists = await checkReferralCode(userReferralCode);
-          
-          // Ensure code is unique
-          while (codeExists) {
-            userReferralCode = generateReferralCode();
-            codeExists = await checkReferralCode(userReferralCode);
+          // Check for referral code from sessionStorage if not provided
+          let finalReferralCode = referralCode;
+          if (!finalReferralCode) {
+            try {
+              finalReferralCode = sessionStorage.getItem('referralCode');
+              if (finalReferralCode) {
+                sessionStorage.removeItem('referralCode'); // Clean up after use
+              }
+            } catch (err) {
+              console.warn('Error reading referral code from storage:', err);
+            }
           }
+
+          // Generate unique referral code for new user
+          const userReferralCode = await generateReferralCode(res.user.uid);
 
           // Find referrer if referral code provided
           let referrerId = null;
-          if (referralCode) {
+          if (finalReferralCode) {
             try {
               const usersRef = collection(db, 'users');
-              const q = query(usersRef, where('referralCode', '==', referralCode.toUpperCase()));
+              const q = query(usersRef, where('referralCode', '==', finalReferralCode.toUpperCase().trim()));
               const querySnapshot = await getDocs(q);
               if (!querySnapshot.empty) {
                 referrerId = querySnapshot.docs[0].id;

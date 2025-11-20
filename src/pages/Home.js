@@ -203,7 +203,16 @@ function Home() {
               Transform your brand with professional boost services by SMMTZ 
             </p>
             <div className="hero-buttons">
-              <button className="btn primary" onClick={() => navigate('/register')}>
+              <button className="btn primary" onClick={() => {
+                // Preserve referral code if in URL
+                const urlParams = new URLSearchParams(window.location.search);
+                const refCode = urlParams.get('ref');
+                if (refCode) {
+                  navigate(`/register?ref=${refCode}`);
+                } else {
+                  navigate('/register');
+                }
+              }}>
                 <span>Get Started </span>
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M5 12h14M12 5l7 7-7 7"></path>

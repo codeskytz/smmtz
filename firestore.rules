@@ -15,12 +15,38 @@ service cloud.firestore {
       // Allow admins to read all user documents
       allow read: if isAdmin();
       
+      // Allow authenticated users to query users by referralCode (for referral validation)
+      // This is needed for checking if referral codes exist
+      allow list: if request.auth != null;
+      
       // Allow users to create their own account (during registration)
       allow create: if request.auth.uid == userId;
       
-      // Allow users to update their own profile (but not role/suspended fields)
+      // Allow users to update their own profile (but not role/suspended/referral fields)
       allow update: if request.auth.uid == userId && 
-        !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'suspended', 'suspendedAt']);
+        !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'suspended', 'suspendedAt', 'referralCode', 'referrerId']);
+      
+      // Allow users to update their own referralEarnings and totalReferrals
+      // This is needed for the referral system to credit earnings
+      // We validate that only these specific fields are being updated and values are valid
+      allow update: if request.auth.uid == userId &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['referralEarnings', 'totalReferrals', 'updatedAt']) &&
+        request.resource.data.referralEarnings is int &&
+        request.resource.data.totalReferrals is int &&
+        request.resource.data.referralEarnings >= 0 &&
+        request.resource.data.totalReferrals >= 0;
+      
+      // Allow users to update other users' referralEarnings and totalReferrals
+      // This is needed when crediting referrers with commission
+      // NOTE: This is a security consideration - ideally this should be done via Cloud Functions
+      // For now, we allow it but validate that only referral fields are updated and values increase
+      allow update: if request.auth != null &&
+        request.auth.uid != userId &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['referralEarnings', 'totalReferrals', 'updatedAt']) &&
+        request.resource.data.referralEarnings is int &&
+        request.resource.data.totalReferrals is int &&
+        request.resource.data.referralEarnings >= (resource.data.referralEarnings == null ? 0 : resource.data.referralEarnings) &&
+        request.resource.data.totalReferrals >= (resource.data.totalReferrals == null ? 0 : resource.data.totalReferrals);
       
       // Allow admins to update any user (role, suspension status, etc)
       allow update: if isAdmin();
@@ -53,13 +79,21 @@ service cloud.firestore {
       allow read: if request.auth != null && request.auth.uid == userId;
 
       // Allow users to create their own orders
-      allow create: if request.auth != null && request.auth.uid == userId;
+      allow create: if request.auth != null && 
+        request.auth.uid == userId &&
+        request.resource.data.cost is int &&
+        request.resource.data.quantity is int;
 
-      // Allow users to update their own orders
-      allow update: if request.auth != null && request.auth.uid == userId;
+      // Allow users to update their own orders (for status updates)
+      allow update: if request.auth != null && 
+        request.auth.uid == userId &&
+        request.resource.data.diff(resource.data).affectedKeys().hasAny(['status', 'updatedAt']);
 
       // Allow admins to read all orders
       allow read: if isAdmin();
+      
+      // Allow admins to update any order
+      allow update: if isAdmin();
     }
 
     // Withdrawals collection
@@ -68,13 +102,17 @@ service cloud.firestore {
       allow read: if request.auth != null && request.auth.uid == resource.data.userId;
 
       // Allow users to create their own withdrawal requests
-      allow create: if request.auth != null && request.auth.uid == request.resource.data.userId;
+      allow create: if request.auth != null && 
+        request.auth.uid == request.resource.data.userId &&
+        request.resource.data.amount is int &&
+        request.resource.data.status == 'pending';
 
       // Allow admins to read all withdrawals
       allow read: if isAdmin();
 
       // Allow admins to update withdrawal status
-      allow update: if isAdmin();
+      allow update: if isAdmin() &&
+        request.resource.data.diff(resource.data).affectedKeys().hasAny(['status', 'updatedAt', 'processedAt']);
     }
 
     // Services collection
@@ -92,6 +130,11 @@ service cloud.firestore {
     match /services {
       // Allow authenticated users to query services
       allow list: if request.auth != null;
+    }
+
+    // Helper function to check if user exists (for referral code queries)
+    function userExists(userId) {
+      return exists(/databases/$(database)/documents/users/$(userId));
     }
 
     // Default deny all
