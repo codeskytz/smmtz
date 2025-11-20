@@ -23,14 +23,18 @@ const WithdrawalRequest = () => {
     }
   }, [user]);
 
+  const [allWithdrawals, setAllWithdrawals] = useState([]);
+  const [showAll, setShowAll] = useState(false);
+
   const loadPendingWithdrawals = async () => {
     try {
       setLoading(true);
       const withdrawalsRef = collection(db, 'withdrawals');
+      
+      // Load all withdrawals for the user
       const q = query(
         withdrawalsRef,
         where('userId', '==', user.uid),
-        where('status', '==', 'pending'),
         orderBy('createdAt', 'desc')
       );
       const snapshot = await getDocs(q);
@@ -38,7 +42,9 @@ const WithdrawalRequest = () => {
         id: doc.id,
         ...doc.data(),
       }));
-      setPendingWithdrawals(withdrawals);
+      
+      setAllWithdrawals(withdrawals);
+      setPendingWithdrawals(withdrawals.filter(w => w.status === 'pending'));
     } catch (err) {
       console.error('Error loading withdrawals:', err);
     } finally {
@@ -201,12 +207,20 @@ const WithdrawalRequest = () => {
         </form>
       </div>
 
-      {/* Pending Withdrawals */}
-      {pendingWithdrawals.length > 0 && (
+      {/* Withdrawals History */}
+      {allWithdrawals.length > 0 && (
         <div className="pending-withdrawals">
-          <h2>Pending Withdrawals</h2>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+            <h2>{showAll ? 'All Withdrawals' : 'Pending Withdrawals'}</h2>
+            <button
+              className="toggle-history-btn"
+              onClick={() => setShowAll(!showAll)}
+            >
+              {showAll ? 'Show Pending Only' : 'Show All'}
+            </button>
+          </div>
           <div className="withdrawals-list">
-            {pendingWithdrawals.map((withdrawal) => (
+            {(showAll ? allWithdrawals : pendingWithdrawals).map((withdrawal) => (
               <div key={withdrawal.id} className="withdrawal-item">
                 <div className="withdrawal-info">
                   <div className="withdrawal-amount">
@@ -225,8 +239,12 @@ const WithdrawalRequest = () => {
                     </div>
                   </div>
                 </div>
-                <div className="withdrawal-status pending">
-                  <span className="status-badge">Pending</span>
+                <div className={`withdrawal-status ${withdrawal.status}`}>
+                  <span className={`status-badge status-${withdrawal.status}`}>
+                    {withdrawal.status === 'pending' ? 'Pending' : 
+                     withdrawal.status === 'paid' ? 'Paid' : 
+                     withdrawal.status === 'canceled' ? 'Canceled' : withdrawal.status}
+                  </span>
                 </div>
               </div>
             ))}

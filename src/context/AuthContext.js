@@ -539,10 +539,57 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // Credit referral earnings to referrer
+  const creditReferralEarnings = async (referrerId, amount) => {
+    try {
+      if (!referrerId) return;
+      
+      const referrerRef = doc(db, 'users', referrerId);
+      const referrerDoc = await getDoc(referrerRef);
+      
+      if (!referrerDoc.exists()) return;
+      
+      const currentEarnings = referrerDoc.data().referralEarnings || 0;
+      const newEarnings = currentEarnings + amount;
+      
+      await updateDoc(referrerRef, {
+        referralEarnings: newEarnings,
+      });
+      
+      // Update local state if it's the current user
+      if (user && user.uid === referrerId) {
+        setReferralEarnings(newEarnings);
+      }
+    } catch (err) {
+      console.error('Error crediting referral earnings:', err);
+    }
+  };
+
+  // Get referral earnings
+  const getReferralEarnings = async () => {
+    try {
+      if (!user) return 0;
+      
+      const userRef = doc(db, 'users', user.uid);
+      const userDoc = await getDoc(userRef);
+      
+      if (userDoc.exists()) {
+        const earnings = userDoc.data().referralEarnings || 0;
+        setReferralEarnings(earnings);
+        return earnings;
+      }
+      return 0;
+    } catch (err) {
+      console.error('Error getting referral earnings:', err);
+      return 0;
+    }
+  };
+
   const value = {
     user,
     userRole,
     userBalance,
+    referralEarnings,
     loading,
     error,
     register,
@@ -561,6 +608,9 @@ export const AuthProvider = ({ children }) => {
     getUserBalance,
     updateUserBalance,
     withdrawFromBalance,
+    creditReferralEarnings,
+    getReferralEarnings,
+    checkReferralCode,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

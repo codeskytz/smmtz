@@ -110,9 +110,10 @@ service cloud.firestore {
       // Allow admins to read all withdrawals
       allow read: if isAdmin();
 
-      // Allow admins to update withdrawal status
+      // Allow admins to update withdrawal status (paid or canceled)
       allow update: if isAdmin() &&
-        request.resource.data.diff(resource.data).affectedKeys().hasAny(['status', 'updatedAt', 'processedAt']);
+        request.resource.data.diff(resource.data).affectedKeys().hasAny(['status', 'updatedAt', 'processedAt']) &&
+        request.resource.data.status in ['pending', 'paid', 'canceled'];
     }
 
     // Services collection

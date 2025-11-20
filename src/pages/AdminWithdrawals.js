@@ -6,7 +6,7 @@ import '../styles/AdminWithdrawals.css';
 const AdminWithdrawals = () => {
   const [withdrawals, setWithdrawals] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState('all'); // all, pending, approved, rejected
+  const [filter, setFilter] = useState('all'); // all, pending, paid, canceled
   const [processing, setProcessing] = useState(null);
   const [error, setError] = useState('');
 
@@ -59,8 +59,8 @@ const AdminWithdrawals = () => {
         processedAt: new Date(),
       });
 
-      // If approved, deduct from user's referral earnings
-      if (newStatus === 'approved') {
+      // If paid, deduct from user's referral earnings
+      if (newStatus === 'paid') {
         const withdrawal = withdrawals.find(w => w.id === withdrawalId);
         if (withdrawal) {
           const userRef = doc(db, 'users', withdrawal.userId);
@@ -90,10 +90,10 @@ const AdminWithdrawals = () => {
     switch (status) {
       case 'pending':
         return 'status-pending';
-      case 'approved':
-        return 'status-approved';
-      case 'rejected':
-        return 'status-rejected';
+      case 'paid':
+        return 'status-paid';
+      case 'canceled':
+        return 'status-canceled';
       default:
         return '';
     }
@@ -103,10 +103,10 @@ const AdminWithdrawals = () => {
     switch (status) {
       case 'pending':
         return 'Pending';
-      case 'approved':
-        return 'Approved';
-      case 'rejected':
-        return 'Rejected';
+      case 'paid':
+        return 'Paid';
+      case 'canceled':
+        return 'Canceled';
       default:
         return status;
     }
@@ -141,16 +141,16 @@ const AdminWithdrawals = () => {
             Pending
           </button>
           <button
-            className={`filter-tab ${filter === 'approved' ? 'active' : ''}`}
-            onClick={() => setFilter('approved')}
+            className={`filter-tab ${filter === 'paid' ? 'active' : ''}`}
+            onClick={() => setFilter('paid')}
           >
-            Approved
+            Paid
           </button>
           <button
-            className={`filter-tab ${filter === 'rejected' ? 'active' : ''}`}
-            onClick={() => setFilter('rejected')}
+            className={`filter-tab ${filter === 'canceled' ? 'active' : ''}`}
+            onClick={() => setFilter('canceled')}
           >
-            Rejected
+            Canceled
           </button>
         </div>
       </div>
@@ -215,17 +215,17 @@ const AdminWithdrawals = () => {
                       <div className="action-buttons">
                         <button
                           className="btn-approve"
-                          onClick={() => handleStatusUpdate(withdrawal.id, 'approved')}
+                          onClick={() => handleStatusUpdate(withdrawal.id, 'paid')}
                           disabled={processing === withdrawal.id}
                         >
-                          {processing === withdrawal.id ? 'Processing...' : 'Approve'}
+                          {processing === withdrawal.id ? 'Processing...' : 'Mark as Paid'}
                         </button>
                         <button
                           className="btn-reject"
-                          onClick={() => handleStatusUpdate(withdrawal.id, 'rejected')}
+                          onClick={() => handleStatusUpdate(withdrawal.id, 'canceled')}
                           disabled={processing === withdrawal.id}
                         >
-                          Reject
+                          Cancel
                         </button>
                       </div>
                     ) : (
